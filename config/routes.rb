@@ -72,6 +72,14 @@ Rails.application.routes.draw do
 
     resource :settings, controller: "project_settings", only: [:show, :update] do
       post :test_notification
+      post :test_fizzy_sync
+      post :sync_all_errors
+    end
+
+    resources :error_imports, only: [:index, :show, :create, :destroy] do
+      collection do
+        post :test_connection
+      end
     end
 
     resources :issues do
@@ -119,6 +127,7 @@ Rails.application.routes.draw do
   resources :checkouts, only: :create
   resources :billing_portal, only: :create
   post "/webhooks/stripe", to: "webhooks#stripe"
+  post "/webhooks/honeybadger", to: "webhooks#honeybadger"
 
   # Subscription management
   resources :subscriptions, only: [:new, :create, :show, :destroy]

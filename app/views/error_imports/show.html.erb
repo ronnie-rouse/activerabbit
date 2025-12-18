@@ -1,0 +1,109 @@
+<% content_for :page_title do %>
+  Import Details - <%= @project.name %>
+<% end %>
+
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="mb-6">
+    <%= link_to "← Back to Imports", project_error_imports_path(@project),
+        class: "text-blue-600 hover:text-blue-800 mb-4 inline-block" %>
+    <h1 class="text-2xl font-bold text-gray-900">Import Details</h1>
+  </div>
+
+  <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h2 class="text-lg font-medium text-gray-900">Import Information</h2>
+    </div>
+    <div class="px-6 py-4">
+      <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+        <div>
+          <dt class="text-sm font-medium text-gray-500">Provider</dt>
+          <dd class="mt-1 text-sm text-gray-900"><%= @error_import.provider.camelize %></dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-gray-500">Status</dt>
+          <dd class="mt-1">
+            <% status_class = case @error_import.status
+              when 'completed' then 'bg-green-100 text-green-800'
+              when 'running' then 'bg-blue-100 text-blue-800'
+              when 'failed' then 'bg-red-100 text-red-800'
+              when 'pending' then 'bg-yellow-100 text-yellow-800'
+              else 'bg-gray-100 text-gray-800'
+              end %>
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= status_class %>">
+              <%= @error_import.status %>
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-gray-500">Total Count</dt>
+          <dd class="mt-1 text-sm text-gray-900"><%= @error_import.total_count %></dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-gray-500">Imported</dt>
+          <dd class="mt-1 text-sm text-gray-900"><%= @error_import.imported_count %></dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-gray-500">Skipped</dt>
+          <dd class="mt-1 text-sm text-gray-900"><%= @error_import.skipped_count %></dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-gray-500">Failed</dt>
+          <dd class="mt-1 text-sm text-gray-900"><%= @error_import.failed_count %></dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-gray-500">Started At</dt>
+          <dd class="mt-1 text-sm text-gray-900"><%= @error_import.started_at&.strftime("%Y-%m-%d %H:%M:%S") || '-' %></dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-gray-500">Completed At</dt>
+          <dd class="mt-1 text-sm text-gray-900"><%= @error_import.completed_at&.strftime("%Y-%m-%d %H:%M:%S") || '-' %></dd>
+        </div>
+      </dl>
+
+      <% if @error_import.error_message.present? %>
+        <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-md">
+          <h3 class="text-sm font-medium text-red-800">Error Message</h3>
+          <p class="mt-1 text-sm text-red-700"><%= @error_import.error_message %></p>
+        </div>
+      <% end %>
+
+      <% if @error_import.warnings.present? %>
+        <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+          <h3 class="text-sm font-medium text-yellow-800">Warnings</h3>
+          <p class="mt-1 text-sm text-yellow-700"><%= @error_import.warnings %></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @imported_issues.any? %>
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Imported Issues</h2>
+        <p class="text-sm text-gray-500 mt-1">Issues imported from this import job</p>
+      </div>
+      <div class="px-6 py-4">
+        <ul class="divide-y divide-gray-200">
+          <% @imported_issues.each do |issue| %>
+            <li class="py-3">
+              <%= link_to project_error_path(@project, issue),
+                  class: "block hover:bg-gray-50 p-2 rounded" do %>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm font-medium text-gray-900"><%= issue.exception_class %></p>
+                    <p class="text-sm text-gray-500"><%= truncate(issue.message, length: 100) %></p>
+                  </div>
+                  <div class="text-sm text-gray-500">
+                    <%= pluralize(issue.events.count, 'event') %>
+                  </div>
+                </div>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+        <p class="text-sm text-gray-500 mt-4">Showing up to 50 imported issues</p>
+      </div>
+    </div>
+  <% end %>
+</div>
+

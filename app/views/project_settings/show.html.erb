@@ -346,61 +346,484 @@
     </div>
   <% end %>
 
-    <!-- GitHub Integration Card -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
+  <!-- Git Integration Card -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 mt-6 mb-6">
     <div class="px-6 py-4 border-b border-gray-200">
       <div class="flex items-center">
-        <svg viewBox="0 0 16 16" width="20" height="20" class="mr-2 text-gray-800" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 012 0c1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+        <svg class="w-6 h-6 text-gray-800 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+        </svg>
         <div>
-          <h3 class="text-lg font-medium text-gray-900">GitHub Integration</h3>
-          <p class="text-sm text-gray-500">Configure repository and authentication for PR automation</p>
+          <h3 class="text-lg font-medium text-gray-900">Git Integration</h3>
+          <p class="text-sm text-gray-500">Configure repository and authentication for PR/MR automation</p>
         </div>
       </div>
     </div>
     <div class="p-6">
       <%= form_with(model: @project, url: project_settings_path(@project), method: :patch, local: true, html: { multipart: true }, class: "space-y-4") do |form| %>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Repository (owner/repo)</label>
-            <%= form.text_field :github_repo, value: @project.settings['github_repo'], placeholder: "owner/repo", class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Installation ID</label>
-            <%= form.text_field :github_installation_id, value: @project.settings['github_installation_id'], placeholder: "12345678", class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Personal Access Token (optional)</label>
-            <%= form.password_field :github_pat, value: @project.settings['github_pat'], placeholder: "ghp_...", class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
-            <p class="text-xs text-gray-500 mt-1">Used if provided. Otherwise the App credentials are used.</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">GitHub App ID (optional)</label>
-            <%= form.text_field :github_app_id, value: @project.settings['github_app_id'], placeholder: "12345", class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
-          </div>
-        </div>
+        <% git_provider = @project.settings['git_provider'] || 'github' %>
+        
+        <!-- Provider Selection -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Upload GitHub App Private Key (PEM file)</label>
-          <%= form.file_field :github_app_pk_file, accept: ".pem", class: "block w-full text-sm text-gray-700" %>
-          <p class="text-xs text-gray-500 mt-1">If provided, this overrides any pasted PEM value.</p>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Git Provider</label>
+          <div class="flex space-x-4">
+            <label class="flex items-center">
+              <%= form.radio_button :git_provider, 'github', checked: git_provider == 'github', class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" %>
+              <span class="ml-2 text-sm text-gray-700 flex items-center">
+                <svg viewBox="0 0 16 16" class="w-4 h-4 mr-1" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 012 0c1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+                GitHub
+              </span>
+            </label>
+            <label class="flex items-center">
+              <%= form.radio_button :git_provider, 'gitlab', checked: git_provider == 'gitlab', class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" %>
+              <span class="ml-2 text-sm text-gray-700 flex items-center">
+                <img src="https://about.gitlab.com/images/press/gitlab-logo-600-rgb.png" alt="GitLab" class="w-4 h-4 mr-1 object-contain" />
+                GitLab
+              </span>
+            </label>
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Or paste GitHub App Private Key (PEM)</label>
-          <%= form.text_area :github_app_pk, value: @project.settings['github_app_pk'], placeholder: "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----", rows: 6, class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm font-mono" %>
-          <p class="text-xs text-gray-500 mt-1">Stored per project. Prefer secrets manager in production.</p>
+
+        <!-- GitHub Settings -->
+        <div id="github-settings" class="<%= 'hidden' unless git_provider == 'github' %>">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Repository (owner/repo)</label>
+              <%= form.text_field :github_repo, value: @project.settings['github_repo'], placeholder: "owner/repo", class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Installation ID</label>
+              <%= form.text_field :github_installation_id, value: @project.settings['github_installation_id'], placeholder: "12345678", class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Personal Access Token (optional)</label>
+              <%= form.password_field :github_pat, value: @project.settings['github_pat'], placeholder: "ghp_...", class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+              <p class="text-xs text-gray-500 mt-1">Used if provided. Otherwise the App credentials are used.</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">GitHub App ID (optional)</label>
+              <%= form.text_field :github_app_id, value: @project.settings['github_app_id'], placeholder: "12345", class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+            </div>
+          </div>
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Upload GitHub App Private Key (PEM file)</label>
+            <%= form.file_field :github_app_pk_file, accept: ".pem", class: "block w-full text-sm text-gray-700" %>
+            <p class="text-xs text-gray-500 mt-1">If provided, this overrides any pasted PEM value.</p>
+          </div>
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Or paste GitHub App Private Key (PEM)</label>
+            <%= form.text_area :github_app_pk, value: @project.settings['github_app_pk'], placeholder: "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----", rows: 6, class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm font-mono" %>
+            <p class="text-xs text-gray-500 mt-1">Stored per project. Prefer secrets manager in production.</p>
+          </div>
+          <p class="text-xs text-gray-500 mt-4">
+            Permissions needed: <strong>Pull requests</strong> (read/write) and <strong>Contents</strong> (read). Docs: <a href="https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app" target="_blank" class="text-blue-600 hover:text-blue-500">GitHub App installation tokens</a> · <a href="https://docs.github.com/rest/pulls/pulls" target="_blank" class="text-blue-600 hover:text-blue-500">Pull Requests API</a>.
+          </p>
         </div>
-        <p class="text-xs text-gray-500">
-          Permissions needed: <strong>Pull requests</strong> (read/write) and <strong>Contents</strong> (read). Docs: <a href="https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app?utm_source=chatgpt.com" target="_blank" class="text-blue-600 hover:text-blue-500">GitHub App installation tokens</a> · <a href="https://docs.github.com/rest/pulls/pulls?utm_source=chatgpt.com" target="_blank" class="text-blue-600 hover:text-blue-500">Pull Requests API</a>.
-        </p>
+
+        <!-- GitLab Settings -->
+        <div id="gitlab-settings" class="<%= 'hidden' unless git_provider == 'gitlab' %>">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Repository Path</label>
+              <%= form.text_field :gitlab_repo, value: @project.settings['gitlab_repo'], placeholder: "group/project", class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+              <p class="text-xs text-gray-500 mt-1">Project path only (e.g., <code>oss/oss</code> or <code>gitlab-org/gitlab</code>). Do NOT include the full URL.</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">GitLab Host</label>
+              <%= form.text_field :gitlab_host, value: @project.settings['gitlab_host'] || 'https://gitlab.com', placeholder: "https://gitlab.com", class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+              <p class="text-xs text-gray-500 mt-1">Leave as default for GitLab.com, or use your self-hosted instance URL</p>
+            </div>
+          </div>
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Personal Access Token</label>
+            <%= form.password_field :gitlab_token, value: @project.settings['gitlab_token'], placeholder: "glpat-...", class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+            <p class="text-xs text-gray-500 mt-1">Create a token with <strong>api</strong> scope. Docs: <a href="https://docs.gitlab.com/api/rest/" target="_blank" class="text-blue-600 hover:text-blue-500">GitLab REST API</a></p>
+          </div>
+          <p class="text-xs text-gray-500 mt-4">
+            Permissions needed: <strong>api</strong> scope for creating merge requests and managing branches. Docs: <a href="https://docs.gitlab.com/api/rest/" target="_blank" class="text-blue-600 hover:text-blue-500">GitLab REST API</a> · <a href="https://docs.gitlab.com/ee/api/merge_requests.html" target="_blank" class="text-blue-600 hover:text-blue-500">Merge Requests API</a>.
+          </p>
+        </div>
+
         <div class="pt-2">
-          <%= form.submit "Save GitHub Settings",
+          <%= form.submit "Save Git Settings",
                 class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
         </div>
       <% end %>
     </div>
   </div>
+
+  <script>
+    // Toggle between GitHub and GitLab settings
+    document.addEventListener('DOMContentLoaded', function() {
+      const githubRadio = document.querySelector('input[value="github"][name="project[git_provider]"]');
+      const gitlabRadio = document.querySelector('input[value="gitlab"][name="project[git_provider]"]');
+      const githubSettings = document.getElementById('github-settings');
+      const gitlabSettings = document.getElementById('gitlab-settings');
+
+      function toggleSettings() {
+        if (githubRadio && githubRadio.checked) {
+          githubSettings.classList.remove('hidden');
+          gitlabSettings.classList.add('hidden');
+        } else if (gitlabRadio && gitlabRadio.checked) {
+          githubSettings.classList.add('hidden');
+          gitlabSettings.classList.remove('hidden');
+        }
+      }
+
+      if (githubRadio) githubRadio.addEventListener('change', toggleSettings);
+      if (gitlabRadio) gitlabRadio.addEventListener('change', toggleSettings);
+    });
+  </script>
+
+  <!-- Fizzy Integration Card -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+          </svg>
+          <div>
+            <h3 class="text-lg font-medium text-gray-900">Fizzy Integration</h3>
+            <p class="text-sm text-gray-500">Sync errors to your local Fizzy instance</p>
+          </div>
+        </div>
+        <div class="flex items-center">
+          <% if @project.fizzy_configured? %>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              Configured
+            </span>
+          <% else %>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+              </svg>
+              Not Configured
+            </span>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <%= form_with(model: @project, url: project_settings_path(@project), method: :patch, local: true, class: "space-y-6") do |form| %>
+
+        <!-- Endpoint URL -->
+        <div>
+          <label for="fizzy_endpoint_url" class="block text-sm font-medium text-gray-700 mb-2">
+            Fizzy API Endpoint URL
+            <span class="text-red-500">*</span>
+          </label>
+
+          <% if @project.fizzy_endpoint_from_env? %>
+            <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-md">
+              <div class="flex items-center">
+                <svg class="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm text-green-800 font-medium">Endpoint URL configured via environment variable</span>
+              </div>
+              <p class="text-xs text-green-700 mt-1">
+                Using secure environment variable for endpoint URL. This is the recommended approach for production.
+              </p>
+            </div>
+          <% end %>
+
+          <%= form.url_field :fizzy_endpoint_url,
+                value: @project.fizzy_endpoint_from_env? ? '' : @project.fizzy_endpoint_url,
+                placeholder: @project.fizzy_endpoint_from_env? ? "Configured via environment variable" : "http://fizzy.localhost:3006/ACCOUNT_SLUG/boards/BOARD_ID/cards",
+                disabled: @project.fizzy_endpoint_from_env?,
+                class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm #{'bg-gray-50 text-gray-500' if @project.fizzy_endpoint_from_env?}" %>
+
+          <div class="mt-2 space-y-1">
+            <p class="text-xs text-gray-500">
+              Enter the full URL to create cards in Fizzy. Format: <code>http://fizzy.localhost:3006/ACCOUNT_SLUG/boards/BOARD_ID/cards</code>
+            </p>
+            <p class="text-xs text-gray-500">
+              See <a href="https://github.com/basecamp/fizzy/blob/main/docs/API.md" target="_blank" class="text-blue-600 hover:text-blue-500">Fizzy API docs</a> for details.
+            </p>
+            <details class="text-xs text-gray-500">
+              <summary class="cursor-pointer text-blue-600 hover:text-blue-500">🔒 Security Options</summary>
+              <div class="mt-2 p-2 bg-gray-50 rounded border-l-2 border-blue-200">
+                <p class="mb-2"><strong>For production environments:</strong></p>
+                <p class="mb-1">• Set <code>FIZZY_ENDPOINT_URL</code> environment variable (all projects)</p>
+                <p class="mb-1">• Set <code>FIZZY_ENDPOINT_URL_<%= @project.slug.upcase %></code> for this project only</p>
+                <p class="text-gray-400">Environment variables are more secure than database storage</p>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <!-- API Key -->
+        <div>
+          <label for="fizzy_api_key" class="block text-sm font-medium text-gray-700 mb-2">
+            Fizzy API Key
+            <span class="text-red-500">*</span>
+          </label>
+
+          <% if @project.fizzy_api_key_from_env? %>
+            <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-md">
+              <div class="flex items-center">
+                <svg class="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm text-green-800 font-medium">API key configured via environment variable</span>
+              </div>
+              <p class="text-xs text-green-700 mt-1">
+                Using secure environment variable for API key. This is the recommended approach for production.
+              </p>
+            </div>
+          <% end %>
+
+          <%= form.password_field :fizzy_api_key,
+                value: @project.fizzy_api_key_from_env? ? '' : @project.fizzy_api_key,
+                placeholder: @project.fizzy_api_key_from_env? ? "Configured via environment variable" : "Enter your Fizzy API key",
+                disabled: @project.fizzy_api_key_from_env?,
+                class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm #{'bg-gray-50 text-gray-500' if @project.fizzy_api_key_from_env?}" %>
+
+          <div class="mt-2 space-y-1">
+            <p class="text-xs text-gray-500">
+              Enter your Fizzy API key for authentication
+            </p>
+            <details class="text-xs text-gray-500">
+              <summary class="cursor-pointer text-blue-600 hover:text-blue-500">🔒 Security Options</summary>
+              <div class="mt-2 p-2 bg-gray-50 rounded border-l-2 border-blue-200">
+                <p class="mb-2"><strong>For production environments:</strong></p>
+                <p class="mb-1">• Set <code>FIZZY_API_KEY</code> environment variable (all projects)</p>
+                <p class="mb-1">• Set <code>FIZZY_API_KEY_<%= @project.slug.upcase %></code> for this project only</p>
+                <p class="text-gray-400">Environment variables are more secure than database storage</p>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <!-- Enable/Disable Toggle -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <%= form.check_box :fizzy_sync_enabled,
+                  checked: @project.fizzy_sync_enabled?,
+                  class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" %>
+            <label for="project_fizzy_sync_enabled" class="ml-2 block text-sm text-gray-900">
+              Enable Fizzy error sync
+            </label>
+          </div>
+          <p class="text-xs text-gray-500">
+            Turn sync on/off without removing configuration
+          </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+          <div class="flex space-x-3">
+            <%= form.submit "Save Settings",
+                  class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+
+            <% if @project.fizzy_configured? %>
+              <%= button_to "Test Sync",
+                    test_fizzy_sync_project_settings_path(@project),
+                    method: :post,
+                    class: "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+            <% end %>
+          </div>
+
+          <% if @project.fizzy_configured? %>
+            <div class="flex flex-col space-y-2">
+              <%= button_to "Sync All Errors (Background)",
+                    sync_all_errors_project_settings_path(@project),
+                    method: :post,
+                    data: { confirm: "This will sync all issues to Fizzy in the background. Check /sidekiq to monitor progress. Continue?" },
+                    class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" %>
+              <%= button_to "Sync All Errors (Test - Synchronous)",
+                    sync_all_errors_project_settings_path(@project, sync: true),
+                    method: :post,
+                    data: { confirm: "This will sync all issues to Fizzy synchronously (for testing). This may take a while. Continue?" },
+                    class: "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+              <p class="text-xs text-gray-500">
+                Background sync uses Sidekiq. Check <a href="/sidekiq" target="_blank" class="text-blue-600 hover:text-blue-500">Sidekiq dashboard</a> to monitor progress.
+              </p>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Error Import Card -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          <div>
+            <h3 class="text-lg font-medium text-gray-900">Error Import</h3>
+            <p class="text-sm text-gray-500">Import errors from external error tracking services</p>
+          </div>
+        </div>
+        <div class="flex items-center">
+          <% if @project.honeybadger_configured? %>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              Configured
+            </span>
+          <% else %>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+              </svg>
+              Not Configured
+            </span>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <%= form_with(model: @project, url: project_settings_path(@project), method: :patch, local: true, class: "space-y-6") do |form| %>
+        <!-- Provider Configuration -->
+        <div class="provider-config">
+          <h4 class="text-md font-medium text-gray-900 mb-4">Honeybadger</h4>
+
+          <!-- API Token -->
+          <div class="mb-4">
+            <label for="honeybadger_api_token" class="block text-sm font-medium text-gray-700 mb-2">
+              API Token
+              <span class="text-red-500">*</span>
+            </label>
+            <%= form.password_field :honeybadger_api_token,
+                  value: @project.honeybadger_api_token&.gsub(/./, '*'),
+                  placeholder: "Enter your Honeybadger API token",
+                  class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+            <p class="text-xs text-gray-500 mt-1">Get your token from your Honeybadger profile page</p>
+          </div>
+
+          <!-- Project ID -->
+          <div class="mb-4">
+            <label for="honeybadger_project_id" class="block text-sm font-medium text-gray-700 mb-2">
+              Project ID
+              <span class="text-red-500">*</span>
+            </label>
+            <%= form.text_field :honeybadger_project_id,
+                  value: @project.honeybadger_project_id,
+                  placeholder: "Enter your Honeybadger project ID",
+                  class: "block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex space-x-3 mb-6">
+            <%= form.submit "Save Configuration",
+                  class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+
+            <% if @project.honeybadger_configured? %>
+              <%= button_to "Test Connection",
+                    test_connection_project_error_imports_path(@project, provider: 'honeybadger'),
+                    method: :post,
+                    remote: true,
+                    class: "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
+                    id: "test-honeybadger-connection" %>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Webhook Configuration -->
+        <div class="webhook-config border-t border-gray-200 pt-6">
+          <h4 class="text-md font-medium text-gray-900 mb-4">Webhook Integration (Recommended)</h4>
+          <p class="text-sm text-gray-500 mb-4">Set up real-time error import via webhooks. Copy the webhook URL below and configure it in your Honeybadger project settings.</p>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Webhook URL</label>
+            <div class="flex items-center space-x-2">
+              <input type="text"
+                     value="<%= @project.honeybadger_webhook_url %>"
+                     readonly
+                     class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 sm:text-sm"
+                     id="webhook-url" />
+              <button type="button"
+                      onclick="copyWebhookUrl()"
+                      class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Copy URL
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Configure this URL in Honeybadger: Project Settings > Alerts & Integrations > Webhook</p>
+          </div>
+
+          <div class="mb-4">
+            <div class="flex items-center">
+              <%= form.check_box :honeybadger_webhook_enabled,
+                    checked: @project.honeybadger_webhook_enabled?,
+                    class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" %>
+              <label for="project_honeybadger_webhook_enabled" class="ml-2 block text-sm text-gray-900">
+                Enable webhook import
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Batch Import Actions -->
+        <div class="import-actions border-t border-gray-200 pt-6">
+          <h4 class="text-md font-medium text-gray-900 mb-4">Batch Import (Historical Data)</h4>
+          <p class="text-sm text-gray-500 mb-4">Import historical errors from Honeybadger. Use this for one-time imports or to backfill data.</p>
+
+          <div class="flex space-x-3">
+            <%= link_to "Start Batch Import",
+                  project_error_imports_path(@project),
+                  method: :post,
+                  params: { provider: 'honeybadger', incremental: true },
+                  class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" %>
+            <%= link_to "View Import History",
+                  project_error_imports_path(@project),
+                  class: "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
  </div>
+
+<script>
+function copyWebhookUrl() {
+  const input = document.getElementById('webhook-url');
+  input.select();
+  document.execCommand('copy');
+  alert('Webhook URL copied to clipboard!');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const testButton = document.getElementById('test-honeybadger-connection');
+  if (testButton) {
+    testButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      fetch(testButton.getAttribute('href'), {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Connection successful!');
+        } else {
+          alert('Connection failed: ' + data.message);
+        }
+      })
+      .catch(error => {
+        alert('Error testing connection: ' + error.message);
+      });
+    });
+  }
+});
+</script>
 
  <script>
 function copyToClipboard(text) {

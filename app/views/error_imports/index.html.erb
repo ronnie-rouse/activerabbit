@@ -1,0 +1,100 @@
+<% content_for :page_title do %>
+  Error Imports - <%= @project.name %>
+<% end %>
+
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Error Imports</h1>
+      <p class="text-gray-600 mt-1">View and manage error imports from external services</p>
+    </div>
+    <%= link_to "New Import", project_error_imports_path(@project, provider: 'honeybadger', incremental: true),
+        method: :post,
+        class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+  </div>
+
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Provider</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Imported</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Skipped</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Failed</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Started</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <% if @error_imports.any? %>
+          <% @error_imports.each do |import| %>
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <%= import.provider.camelize %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <% status_class = case import.status
+                  when 'completed' then 'bg-green-100 text-green-800'
+                  when 'running' then 'bg-blue-100 text-blue-800'
+                  when 'failed' then 'bg-red-100 text-red-800'
+                  when 'pending' then 'bg-yellow-100 text-yellow-800'
+                  else 'bg-gray-100 text-gray-800'
+                  end %>
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= status_class %>">
+                  <%= import.status %>
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <% if import.running? %>
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-600 h-2 rounded-full" style="width: <%= import.success_rate %>%"></div>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1"><%= import.success_rate %>%</p>
+                <% else %>
+                  <span class="text-sm text-gray-900"><%= import.success_rate %>%</span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <%= import.imported_count %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <%= import.skipped_count %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <%= import.failed_count %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <%= import.started_at&.strftime("%Y-%m-%d %H:%M") || '-' %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <%= link_to "View", project_error_import_path(@project, import),
+                    class: "text-blue-600 hover:text-blue-900" %>
+                <% unless import.running? %>
+                  <%= link_to "Delete", project_error_import_path(@project, import),
+                      method: :delete,
+                      data: { confirm: "Are you sure?" },
+                      class: "text-red-600 hover:text-red-900 ml-4" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
+              No imports found. Start a new import from project settings.
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @error_imports.respond_to?(:total_pages) && @error_imports.total_pages > 1 %>
+    <div class="mt-4">
+      <%= paginate @error_imports %>
+    </div>
+  <% end %>
+</div>
+

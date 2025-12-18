@@ -5,5 +5,6 @@
 # See the ActiveSupport::ParameterFilter documentation for supported notations and behaviors.
 Rails.application.config.filter_parameters += [
   :passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn, :cvv, :cvc,
-  :slack_webhook_url, :webhook_url, :slack_webhook
+  :slack_webhook_url, :webhook_url, :slack_webhook,
+  :honeybadger_api_token, :honeybadger_webhook_token
 ]

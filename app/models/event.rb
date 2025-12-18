@@ -13,6 +13,8 @@ class Event < ApplicationRecord
   scope :recent, -> { order(occurred_at: :desc) }
   scope :for_timerange, ->(start_time, end_time) { where(occurred_at: start_time..end_time) }
   scope :last_24h, -> { where("occurred_at > ?", 24.hours.ago) }
+  scope :imported_from, ->(provider) { where(external_source: provider) }
+  scope :external, -> { where.not(external_source: nil) }
 
   before_create :set_defaults
 
@@ -49,8 +51,18 @@ class Event < ApplicationRecord
       user_id_hash: payload[:user_id] ? Digest::SHA256.hexdigest(payload[:user_id].to_s) : nil,
       context: scrub_pii(payload[:context] || {}),
       server_name: payload[:server_name],
-      request_id: payload[:request_id]
+      request_id: payload[:request_id],
+      external_source: payload[:external_source],
+      external_id: payload[:external_id]
     )
+  end
+
+  def self.exists_from_external?(project:, provider:, external_id:)
+    where(
+      project: project,
+      external_source: provider,
+      external_id: external_id.to_s
+    ).exists?
   end
 
   def top_frame
@@ -73,6 +85,24 @@ class Event < ApplicationRecord
     # Error events don't typically have durations
     # This could be extended in the future to support performance events with durations
     nil
+  end
+
+  def payload
+    {
+      exception_class: exception_class,
+      message: message,
+      backtrace: backtrace,
+      controller_action: controller_action,
+      request_path: request_path,
+      request_method: request_method,
+      occurred_at: occurred_at,
+      environment: environment,
+      release_version: release_version,
+      user_id_hash: user_id_hash,
+      context: context,
+      server_name: server_name,
+      request_id: request_id
+    }
   end
 
   private

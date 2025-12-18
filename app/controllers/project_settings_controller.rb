@@ -22,6 +22,7 @@ class ProjectSettingsController < ApplicationController
 
     ok &&= update_notification_settings if params[:project]&.dig(:notifications)
     ok &&= update_github_settings if params[:project]&.except(:notifications).present?
+    ok &&= update_import_settings if params[:project]&.key?(:honeybadger_api_token) || params[:project]&.key?(:honeybadger_project_id) || params[:project]&.key?(:honeybadger_webhook_enabled)
     ok &&= update_notification_preferences if params[:preferences].present?
 
     if ok
@@ -53,6 +54,7 @@ class ProjectSettingsController < ApplicationController
       redirect_to project_settings_path(@project), alert: "Failed to send test notification: #{e.message}"
     end
   end
+
 
   private
 
@@ -91,56 +93,6 @@ class ProjectSettingsController < ApplicationController
     @project.save
   end
 
-  def update_github_settings
-    gh_params = params.fetch(:project, {}).permit(:github_repo, :github_installation_id, :github_pat, :github_app_id, :github_app_pk, :github_app_pk_file)
-    return true if gh_params.blank?
-
-    settings = @project.settings || {}
-    # Helper to set or clear a setting if the field was present in the form
-    set_or_clear = lambda do |key, param_key|
-      if gh_params.key?(param_key)
-        value = gh_params[param_key]
-        if value.present?
-          settings[key] = value.is_a?(String) ? value.strip : value
-        else
-          settings.delete(key)
-        end
-      end
-    end
-
-    set_or_clear.call("github_repo", :github_repo)
-    set_or_clear.call("github_installation_id", :github_installation_id)
-    set_or_clear.call("github_pat", :github_pat)
-    set_or_clear.call("github_app_id", :github_app_id)
-    # File upload takes precedence over pasted PEM
-    if gh_params[:github_app_pk_file].present?
-      uploaded = gh_params[:github_app_pk_file]
-      settings["github_app_pk"] = uploaded.read
-    else
-      set_or_clear.call("github_app_pk", :github_app_pk)
-    end
-    @project.settings = settings
-    @project.save
-  end
-
-  def test_slack_notification
-    begin
-      slack_service = SlackNotificationService.new(@project)
-      slack_service.send_custom_alert(
-        "🧪 *Test Notification*",
-        "Your Slack integration is working correctly! Settings have been saved.",
-        color: "good"
-      )
-
-      redirect_to project_settings_path(@project),
-                  notice: "Slack settings saved and test notification sent successfully!"
-    rescue StandardError => e
-      Rails.logger.error "Slack test failed: #{e.message}"
-      redirect_to project_settings_path(@project),
-                  alert: "Settings saved, but test notification failed: #{e.message}"
-    end
-  end
-
   def update_notification_preferences
     prefs = params[:preferences]
     return true if prefs.blank?
@@ -148,6 +100,31 @@ class ProjectSettingsController < ApplicationController
     prefs.each do |id, attrs|
       pref = @project.notification_preferences.find(id)
       pref.update!(frequency: attrs[:frequency])
+    end
+
+    true
+  end
+
+  def update_import_settings
+    import_params = params.fetch(:project, {}).permit(
+      :honeybadger_api_token,
+      :honeybadger_project_id,
+      :honeybadger_webhook_enabled
+    )
+
+    if import_params.present?
+      @project.honeybadger_api_token = import_params[:honeybadger_api_token] if import_params.key?(:honeybadger_api_token)
+      @project.honeybadger_project_id = import_params[:honeybadger_project_id] if import_params.key?(:honeybadger_project_id)
+
+      if import_params.key?(:honeybadger_webhook_enabled)
+        if import_params[:honeybadger_webhook_enabled] == "1"
+          @project.enable_honeybadger_webhook!
+        else
+          @project.disable_honeybadger_webhook!
+        end
+      end
+
+      @project.save
     end
 
     true
