@@ -21,7 +21,7 @@ class ProjectSettingsController < ApplicationController
     ok = true
 
     ok &&= update_notification_settings if params[:project]&.dig(:notifications)
-    ok &&= update_github_settings if params[:project]&.except(:notifications).present?
+    ok &&= update_git_settings if params[:project]&.except(:notifications).present?
     ok &&= update_notification_preferences if params[:preferences].present?
 
     if ok
@@ -54,6 +54,7 @@ class ProjectSettingsController < ApplicationController
     end
   end
 
+
   private
 
   def set_project
@@ -66,6 +67,77 @@ class ProjectSettingsController < ApplicationController
     else
       redirect_to dashboard_path, alert: "Project not found."
     end
+  end
+
+  def update_git_settings
+    git_params = params.fetch(:project, {}).permit(:git_provider, :github_repo, :github_installation_id, :github_pat, :github_app_id, :github_app_pk, :github_app_pk_file, :gitlab_repo, :gitlab_token, :gitlab_host)
+    return true if git_params.blank?
+
+    settings = @project.settings || {}
+
+    # Update git provider
+    if git_params.key?(:git_provider)
+      settings["git_provider"] = git_params[:git_provider].presence || "github"
+    end
+
+    provider = settings["git_provider"] || "github"
+
+    if provider == "github"
+      # Helper to set or clear a setting if the field was present in the form
+      set_or_clear = lambda do |key, param_key|
+        if git_params.key?(param_key)
+          value = git_params[param_key]
+          if value.present?
+            settings[key] = value.is_a?(String) ? value.strip : value
+          else
+            settings.delete(key)
+          end
+        end
+      end
+
+      set_or_clear.call("github_repo", :github_repo)
+      set_or_clear.call("github_installation_id", :github_installation_id)
+      set_or_clear.call("github_pat", :github_pat)
+      set_or_clear.call("github_app_id", :github_app_id)
+      # File upload takes precedence over pasted PEM
+      if git_params[:github_app_pk_file].present?
+        uploaded = git_params[:github_app_pk_file]
+        settings["github_app_pk"] = uploaded.read
+      else
+        set_or_clear.call("github_app_pk", :github_app_pk)
+      end
+
+      # Clear GitLab settings when switching to GitHub
+      settings.delete("gitlab_repo")
+      settings.delete("gitlab_token")
+      settings.delete("gitlab_host")
+    elsif provider == "gitlab"
+      # Helper to set or clear a setting if the field was present in the form
+      set_or_clear = lambda do |key, param_key|
+        if git_params.key?(param_key)
+          value = git_params[param_key]
+          if value.present?
+            settings[key] = value.is_a?(String) ? value.strip : value
+          else
+            settings.delete(key)
+          end
+        end
+      end
+
+      set_or_clear.call("gitlab_repo", :gitlab_repo)
+      set_or_clear.call("gitlab_token", :gitlab_token)
+      set_or_clear.call("gitlab_host", :gitlab_host)
+
+      # Clear GitHub settings when switching to GitLab
+      settings.delete("github_repo")
+      settings.delete("github_installation_id")
+      settings.delete("github_pat")
+      settings.delete("github_app_id")
+      settings.delete("github_app_pk")
+    end
+
+    @project.settings = settings
+    @project.save
   end
 
   def update_notification_settings
@@ -91,36 +163,16 @@ class ProjectSettingsController < ApplicationController
     @project.save
   end
 
-  def update_github_settings
-    gh_params = params.fetch(:project, {}).permit(:github_repo, :github_installation_id, :github_pat, :github_app_id, :github_app_pk, :github_app_pk_file)
-    return true if gh_params.blank?
+  def update_notification_preferences
+    prefs = params[:preferences]
+    return true if prefs.blank?
 
-    settings = @project.settings || {}
-    # Helper to set or clear a setting if the field was present in the form
-    set_or_clear = lambda do |key, param_key|
-      if gh_params.key?(param_key)
-        value = gh_params[param_key]
-        if value.present?
-          settings[key] = value.is_a?(String) ? value.strip : value
-        else
-          settings.delete(key)
-        end
-      end
+    prefs.each do |id, attrs|
+      pref = @project.notification_preferences.find(id)
+      pref.update!(frequency: attrs[:frequency])
     end
 
-    set_or_clear.call("github_repo", :github_repo)
-    set_or_clear.call("github_installation_id", :github_installation_id)
-    set_or_clear.call("github_pat", :github_pat)
-    set_or_clear.call("github_app_id", :github_app_id)
-    # File upload takes precedence over pasted PEM
-    if gh_params[:github_app_pk_file].present?
-      uploaded = gh_params[:github_app_pk_file]
-      settings["github_app_pk"] = uploaded.read
-    else
-      set_or_clear.call("github_app_pk", :github_app_pk)
-    end
-    @project.settings = settings
-    @project.save
+    true
   end
 
   def test_slack_notification
@@ -139,17 +191,5 @@ class ProjectSettingsController < ApplicationController
       redirect_to project_settings_path(@project),
                   alert: "Settings saved, but test notification failed: #{e.message}"
     end
-  end
-
-  def update_notification_preferences
-    prefs = params[:preferences]
-    return true if prefs.blank?
-
-    prefs.each do |id, attrs|
-      pref = @project.notification_preferences.find(id)
-      pref.update!(frequency: attrs[:frequency])
-    end
-
-    true
   end
 end
