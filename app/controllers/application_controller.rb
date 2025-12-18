@@ -21,7 +21,7 @@ class ApplicationController < ActionController::Base
   # Check quota and show flash message
   before_action :check_quota_exceeded
 
-  helper_method :current_project, :current_account, :selected_project_for_menu
+  helper_method :current_project, :current_account, :selected_project_for_menu, :git_pr_service_for
 
   protected
 
@@ -58,6 +58,16 @@ class ApplicationController < ActionController::Base
 
   def selected_project_for_menu
     @selected_project_for_menu
+  end
+
+  def git_pr_service_for(project)
+    provider = project.settings&.dig("git_provider") || "github"
+    case provider
+    when "gitlab"
+      GitlabPrService.new(project)
+    else
+      GithubPrService.new(project)
+    end
   end
 
   private

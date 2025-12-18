@@ -295,7 +295,7 @@ class ErrorsController < ApplicationController
       flash.now[:warning] = warning_msg if warning_msg
     end
 
-    pr_service = GithubPrService.new(project_scope || @issue.project)
+    pr_service = git_pr_service_for(project_scope || @issue.project)
     result = pr_service.create_pr_for_issue(@issue)
 
     redirect_path = if @current_project
@@ -328,7 +328,7 @@ class ErrorsController < ApplicationController
         )
       end
 
-      # Open PR in the new tab by redirecting directly to GitHub
+      # Open PR/MR in the new tab by redirecting to GitHub or GitLab
       redirect_to result[:pr_url], allow_other_host: true
     else
       redirect_to redirect_path, alert: (result[:error] || "Failed to open PR")
