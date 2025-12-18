@@ -8,7 +8,7 @@ class EventsController < ApplicationController
     @events = @project.events.includes(:issue, :release)
 
     # Filtering
-    @events = @events.where(event_type: params[:event_type]) if params[:event_type].present?
+    # Note: event_type filter removed since all events are error events
     @events = @events.where(environment: params[:environment]) if params[:environment].present?
     @events = @events.where("controller_action ILIKE ?", "%#{params[:controller_action]}%") if params[:controller_action].present?
     @events = @events.joins(:issue).where(issues: { id: params[:issue_id] }) if params[:issue_id].present?
@@ -26,9 +26,9 @@ class EventsController < ApplicationController
     # Stats
     @stats = {
       total_today: @project.events.where("occurred_at > ?", 24.hours.ago).count,
-      errors_today: @project.events.errors.where("occurred_at > ?", 24.hours.ago).count,
-      performance_today: @project.events.performance.where("occurred_at > ?", 24.hours.ago).count,
-      avg_response_time: @project.events.performance
+      errors_today: @project.events.where("occurred_at > ?", 24.hours.ago).count,
+      performance_today: @project.performance_events.where("occurred_at > ?", 24.hours.ago).count,
+      avg_response_time: @project.performance_events
                                 .where("occurred_at > ? AND duration_ms IS NOT NULL", 24.hours.ago)
                                 .average(:duration_ms)&.round(2)
     }

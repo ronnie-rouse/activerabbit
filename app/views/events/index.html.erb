@@ -1,0 +1,284 @@
+<% content_for :page_title do %>
+  Events - <%= @project.name %>
+<% end %>
+
+<div class="mb-8">
+  <div class="flex justify-between items-center">
+    <div>
+      <div class="flex items-center space-x-2 mb-2">
+        <%= link_to project_path(@project), class: "text-gray-500 hover:text-gray-700" do %>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+        <% end %>
+        <h1 class="text-2xl font-bold text-gray-900">Events</h1>
+      </div>
+      <p class="text-gray-600">Error events for <%= @project.name %></p>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Stats -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+  <!-- Total Today -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+      </div>
+      <div class="ml-4">
+        <p class="text-sm font-medium text-gray-500">Total Today</p>
+        <p class="text-2xl font-semibold text-gray-900"><%= @stats[:total_today] %></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Errors Today -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+          <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.268 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+        </div>
+      </div>
+      <div class="ml-4">
+        <p class="text-sm font-medium text-gray-500">Errors Today</p>
+        <p class="text-2xl font-semibold text-gray-900"><%= @stats[:errors_today] %></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Today -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+          <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+        </div>
+      </div>
+      <div class="ml-4">
+        <p class="text-sm font-medium text-gray-500">Performance Today</p>
+        <p class="text-2xl font-semibold text-gray-900"><%= @stats[:performance_today] %></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Avg Response Time -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+          <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+        </div>
+      </div>
+      <div class="ml-4">
+        <p class="text-sm font-medium text-gray-500">Avg Response Time</p>
+        <p class="text-2xl font-semibold text-gray-900">
+          <%= @stats[:avg_response_time] ? "#{@stats[:avg_response_time]}ms" : "—" %>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-lg shadow mb-6 p-6">
+  <%= form_with url: project_events_path(@project), method: :get, local: true, class: "grid grid-cols-1 md:grid-cols-4 gap-4" do |f| %>
+    <div>
+      <%= f.label :environment, "Environment", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.select :environment, options_for_select([["All", ""]] + @environments.keys.map { |e| [e.capitalize, e] }, params[:environment]), {}, { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" } %>
+    </div>
+    <div>
+      <%= f.label :controller_action, "Controller/Action", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :controller_action, value: params[:controller_action], placeholder: "Filter by action", class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+    </div>
+    <div>
+      <%= f.label :date_from, "From Date", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.date_field :date_from, value: params[:date_from], class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+    </div>
+    <div>
+      <%= f.label :date_to, "To Date", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.date_field :date_to, value: params[:date_to], class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+    </div>
+    <div class="md:col-span-4 flex items-center space-x-2">
+      <%= f.submit "Filter", class: "px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
+      <%= link_to "Clear", project_events_path(@project), class: "px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500" %>
+    </div>
+  <% end %>
+</div>
+
+<!-- Events List -->
+<div class="bg-white rounded-lg shadow">
+  <div class="px-6 py-4 border-b border-gray-200">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-medium text-gray-900">Events</h3>
+      <div class="flex items-center space-x-2">
+        <%= form_with url: bulk_delete_project_events_path(@project), method: :post, local: true, id: "bulk-delete-form", data: { confirm: "Are you sure you want to delete selected events?" } do |f| %>
+          <%= f.submit "Delete Selected", class: "px-3 py-1.5 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500", disabled: true, id: "bulk-delete-btn" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <% if @events.any? %>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <input type="checkbox" id="select-all" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exception</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Controller/Action</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Environment</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issue</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Occurred At</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% @events.each do |event| %>
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <input type="checkbox" value="<%= event.id %>" class="event-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900"><%= event.exception_class %></div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-gray-900 max-w-md truncate" title="<%= event.message %>">
+                  <%= truncate(event.message, length: 60) %>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-500"><%= event.controller_action || "—" %></div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  <%= event.environment %>
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <% if event.issue %>
+                  <%= link_to project_issue_path(@project, event.issue), class: "text-sm text-indigo-600 hover:text-indigo-900" do %>
+                    Issue #<%= event.issue.id %>
+                  <% end %>
+                <% else %>
+                  <span class="text-sm text-gray-400">—</span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900"><%= time_ago_in_words(event.occurred_at) %> ago</div>
+                <div class="text-xs text-gray-500"><%= event.occurred_at.strftime("%b %d, %Y %H:%M") %></div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <%= link_to project_event_path(@project, event), class: "text-indigo-600 hover:text-indigo-900 mr-3" do %>
+                  View
+                <% end %>
+                <%= link_to project_event_path(@project, event), method: :delete, data: { confirm: "Are you sure?" }, class: "text-red-600 hover:text-red-900" do %>
+                  Delete
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <% if @events.respond_to?(:current_page) && @events.total_pages > 1 %>
+      <div class="px-6 py-4 border-t border-gray-200">
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-700">
+            Showing
+            <span class="font-medium"><%= @events.offset_value + 1 %></span>
+            to
+            <span class="font-medium"><%= [@events.offset_value + @events.limit_value, @events.total_count].min %></span>
+            of
+            <span class="font-medium"><%= @events.total_count %></span>
+            events
+          </div>
+          <div class="flex-1 flex justify-end">
+            <% if defined?(Kaminari) %>
+              <%= paginate @events %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="p-12 text-center">
+      <div class="w-12 h-12 mx-auto mb-4 text-gray-400">
+        🐰
+      </div>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">No events found</h3>
+      <p class="text-gray-500 mb-4">No events match your current filters. Try adjusting your search criteria.</p>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  // Bulk selection functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.event-checkbox');
+    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+    const bulkDeleteForm = document.getElementById('bulk-delete-form');
+
+    function updateBulkDeleteButton() {
+      const checked = Array.from(checkboxes).filter(cb => cb.checked);
+      bulkDeleteBtn.disabled = checked.length === 0;
+    }
+
+    selectAll?.addEventListener('change', function() {
+      checkboxes.forEach(cb => cb.checked = this.checked);
+      updateBulkDeleteButton();
+    });
+
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', function() {
+        if (!this.checked) {
+          selectAll.checked = false;
+        } else {
+          const allChecked = Array.from(checkboxes).every(c => c.checked);
+          selectAll.checked = allChecked;
+        }
+        updateBulkDeleteButton();
+      });
+    });
+
+    // Handle form submission - add hidden fields for each selected event
+    bulkDeleteForm?.addEventListener('submit', function(e) {
+      const checked = Array.from(checkboxes).filter(cb => cb.checked);
+      if (checked.length === 0) {
+        e.preventDefault();
+        return false;
+      }
+      
+      // Remove any existing hidden fields
+      const existingHidden = bulkDeleteForm.querySelectorAll('input[name="event_ids[]"]');
+      existingHidden.forEach(input => input.remove());
+      
+      // Add hidden fields for each selected event
+      checked.forEach(cb => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'event_ids[]';
+        input.value = cb.value;
+        bulkDeleteForm.appendChild(input);
+      });
+    });
+  });
+</script>
+
