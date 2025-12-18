@@ -75,6 +75,24 @@ class Event < ApplicationRecord
     nil
   end
 
+  def payload
+    {
+      exception_class: exception_class,
+      message: message,
+      backtrace: backtrace,
+      controller_action: controller_action,
+      request_path: request_path,
+      request_method: request_method,
+      occurred_at: occurred_at,
+      environment: environment,
+      release_version: release_version,
+      user_id_hash: user_id_hash,
+      context: context,
+      server_name: server_name,
+      request_id: request_id
+    }
+  end
+
   private
 
   def set_defaults

@@ -5,6 +5,7 @@ class Project < ApplicationRecord
   belongs_to :user
   has_many :issues, dependent: :destroy
   has_many :events, dependent: :destroy
+  has_many :performance_events, dependent: :destroy
   has_many :perf_rollups, dependent: :destroy
   has_many :performance_summaries, dependent: :destroy
   has_many :sql_fingerprints, dependent: :destroy
@@ -14,7 +15,6 @@ class Project < ApplicationRecord
   has_many :alert_rules, dependent: :destroy
   has_many :alert_notifications, dependent: :destroy
   has_many :deploys, dependent: :destroy
-  has_many :notification_preferences, dependent: :destroy
 
   validates :name, presence: true
   validates_uniqueness_to_tenant :name, scope: :user_id
@@ -105,30 +105,138 @@ class Project < ApplicationRecord
     update!(health_status: new_status)
   end
 
-  # ---- Notifications ----
+  # Slack notification settings
+  def slack_webhook_url
+    # Priority: ENV variable > database setting
+    env_webhook = ENV["SLACK_WEBHOOK_URL_#{slug.upcase}"] || ENV["SLACK_WEBHOOK_URL"]
+    env_webhook.presence || settings["slack_webhook_url"]
+  end
+
+  def slack_webhook_url=(url)
+    # Only store in database if not using environment variable
+    if url.present? && !url.start_with?("ENV:")
+      self.settings = settings.merge("slack_webhook_url" => url&.strip)
+    elsif url&.start_with?("ENV:")
+      # Store reference to environment variable
+      env_var = url.sub("ENV:", "")
+      self.settings = settings.merge("slack_webhook_url" => "ENV:#{env_var}")
+    else
+      # Clear the setting
+      new_settings = settings.dup
+      new_settings.delete("slack_webhook_url")
+      self.settings = new_settings
+    end
+  end
+
+  def slack_webhook_from_env?
+    settings["slack_webhook_url"]&.start_with?("ENV:") ||
+    ENV["SLACK_WEBHOOK_URL_#{slug.upcase}"].present? ||
+    ENV["SLACK_WEBHOOK_URL"].present?
+  end
+
+  def slack_channel
+    settings["slack_channel"] || "#alerts"
+  end
+
+  def slack_channel=(channel)
+    # Ensure channel starts with # if it's not a user DM
+    formatted_channel = channel&.strip
+    if formatted_channel.present? && !formatted_channel.start_with?("#", "@")
+      formatted_channel = "##{formatted_channel}"
+    end
+    self.settings = settings.merge("slack_channel" => formatted_channel)
+  end
+
   def slack_configured?
-    slack_access_token.present?
+    slack_webhook_url.present?
   end
 
-  def notifications_enabled?
-    settings.dig("notifications", "enabled") != false
+  def slack_notifications_enabled?
+    slack_configured? && settings["slack_notifications_enabled"] != false
   end
 
-  def notify_via_slack?
-    return false unless notifications_enabled?
-    return false unless slack_configured?
-
-    settings.dig("notifications", "channels", "slack") == true
+  def enable_slack_notifications!
+    self.settings = settings.merge("slack_notifications_enabled" => true)
+    save!
   end
 
-  def notify_via_email?
-    return false unless notifications_enabled?
-
-    settings.dig("notifications", "channels", "email") == true
+  def disable_slack_notifications!
+    self.settings = settings.merge("slack_notifications_enabled" => false)
+    save!
   end
 
-  def notification_pref_for(alert_type)
-    notification_preferences.find_by(alert_type: alert_type)
+  # Fizzy sync settings
+  def fizzy_endpoint_url
+    # Priority: ENV variable > database setting
+    env_endpoint = ENV["FIZZY_ENDPOINT_URL_#{slug.upcase}"] || ENV["FIZZY_ENDPOINT_URL"]
+    env_endpoint.presence || settings["fizzy_endpoint_url"]
+  end
+
+  def fizzy_endpoint_url=(url)
+    # Only store in database if not using environment variable
+    if url.present? && !url.start_with?("ENV:")
+      self.settings = settings.merge("fizzy_endpoint_url" => url&.strip)
+    elsif url&.start_with?("ENV:")
+      # Store reference to environment variable
+      env_var = url.sub("ENV:", "")
+      self.settings = settings.merge("fizzy_endpoint_url" => "ENV:#{env_var}")
+    else
+      # Clear the setting
+      new_settings = settings.dup
+      new_settings.delete("fizzy_endpoint_url")
+      self.settings = new_settings
+    end
+  end
+
+  def fizzy_endpoint_from_env?
+    settings["fizzy_endpoint_url"]&.start_with?("ENV:") ||
+    ENV["FIZZY_ENDPOINT_URL_#{slug.upcase}"].present? ||
+    ENV["FIZZY_ENDPOINT_URL"].present?
+  end
+
+  def fizzy_api_key
+    # Priority: ENV variable > database setting
+    env_key = ENV["FIZZY_API_KEY_#{slug.upcase}"] || ENV["FIZZY_API_KEY"]
+    env_key.presence || settings["fizzy_api_key"]
+  end
+
+  def fizzy_api_key=(key)
+    if key.present? && !key.start_with?("ENV:")
+      self.settings = settings.merge("fizzy_api_key" => key&.strip)
+    elsif key&.start_with?("ENV:")
+      # Store reference to environment variable
+      env_var = key.sub("ENV:", "")
+      self.settings = settings.merge("fizzy_api_key" => "ENV:#{env_var}")
+    else
+      # Clear the setting
+      new_settings = settings.dup
+      new_settings.delete("fizzy_api_key")
+      self.settings = new_settings
+    end
+  end
+
+  def fizzy_api_key_from_env?
+    settings["fizzy_api_key"]&.start_with?("ENV:") ||
+    ENV["FIZZY_API_KEY_#{slug.upcase}"].present? ||
+    ENV["FIZZY_API_KEY"].present?
+  end
+
+  def fizzy_configured?
+    fizzy_endpoint_url.present? && fizzy_api_key.present?
+  end
+
+  def fizzy_sync_enabled?
+    fizzy_configured? && settings["fizzy_sync_enabled"] != false
+  end
+
+  def enable_fizzy_sync!
+    self.settings = settings.merge("fizzy_sync_enabled" => true)
+    save!
+  end
+
+  def disable_fizzy_sync!
+    self.settings = settings.merge("fizzy_sync_enabled" => false)
+    save!
   end
 
   def self.ransackable_attributes(auth_object = nil)

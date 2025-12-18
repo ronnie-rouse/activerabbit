@@ -61,6 +61,24 @@ class ErrorIngestJob
       IssueAlertJob.perform_async(issue.id, issue.project.account_id)
     end
 
+    # Sync to Fizzy if enabled
+    if project.fizzy_sync_enabled?
+      begin
+        fizzy_service = FizzySyncService.new(project)
+        # Use sync_issue to ensure card mapping is stored
+        issue = event.issue
+        if issue
+          fizzy_service.sync_issue(issue)
+        else
+          # Fallback to sync_error if issue not available
+          fizzy_service.sync_error(event)
+        end
+      rescue StandardError => e
+        Rails.logger.error "Fizzy sync failed for event #{event.id}: #{e.message}"
+        # Don't raise - we don't want to break error ingestion
+      end
+    end
+
     Rails.logger.info "Processed error event for project #{project.slug}: #{event.id}"
 
   rescue ActiveRecord::RecordNotFound => e
