@@ -24,14 +24,13 @@ class ApplicationController < ActionController::Base
   helper_method :current_project, :current_account, :selected_project_for_menu
 
   protected
-
     # Use auth layout for Devise controllers
     def layout_by_resource
-    if devise_controller?
-      "auth"
-    else
-      "application"
-    end
+      if devise_controller?
+        "auth"
+      else
+        "application"
+      end
     end
 
     def after_sign_in_path_for(resource)

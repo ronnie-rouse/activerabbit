@@ -207,15 +207,14 @@ module ResourceQuotas
   end
 
   private
-
-  # Get quota for a specific resource based on current plan / trial state
-  #
-  # @param resource_key [Symbol] resource key from PLAN_QUOTAS
-  # @return [Integer] quota value
-  def quota_for_resource(resource_key)
-    plan_key = effective_plan_key
-    PLAN_QUOTAS.dig(plan_key, resource_key) || PLAN_QUOTAS.dig(DEFAULT_PLAN, resource_key) || 0
-  end
+    # Get quota for a specific resource based on current plan / trial state
+    #
+    # @param resource_key [Symbol] resource key from PLAN_QUOTAS
+    # @return [Integer] quota value
+    def quota_for_resource(resource_key)
+      plan_key = effective_plan_key
+      PLAN_QUOTAS.dig(plan_key, resource_key) || PLAN_QUOTAS.dig(DEFAULT_PLAN, resource_key) || 0
+    end
 
   # Get current usage for a specific resource type
   #

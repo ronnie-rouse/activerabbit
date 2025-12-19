@@ -109,15 +109,19 @@ class GithubPrService
     end
 
     def generate_installation_token(installation_id)
-    return nil unless installation_id.present?
-    # Prefer per-project app creds; fallback to env.
-    app_id = @project_app_id.presence || @env_app_id
-    pk_pem = @project_app_pk.presence || @env_app_pk
-    return nil unless app_id.present? && pk_pem.present?
-
-    jwt = generate_app_jwt(app_id, pk_pem)
-    resp = http_post_json("https://api.github.com/app/installations/#{installation_id}/access_tokens", nil, { "Authorization" => "Bearer #{jwt}", "Accept" => "application/vnd.github+json" })
-    resp&.dig("token")
+      return nil unless installation_id.present?
+      
+      # Prefer per-project app creds; fallback to env.
+      app_id = @project_app_id.presence || @env_app_id
+      pk_pem = @project_app_pk.presence || @env_app_pk
+      
+      if app_id.present? && pk_pem.present?
+        jwt = generate_app_jwt(app_id, pk_pem)
+        resp = http_post_json("https://api.github.com/app/installations/#{installation_id}/access_tokens", nil, { "Authorization" => "Bearer #{jwt}", "Accept" => "application/vnd.github+json" })
+        resp&.dig("token")
+      else
+        nil
+      end
     end
 
     def generate_app_jwt(app_id, pk_pem)
