@@ -10,14 +10,18 @@ class GemVerificationService
   def verify_connection
     # Check if we've received any events from this project recently
     recent_events_check = check_recent_events
-    return recent_events_check if recent_events_check[:success]
-
-    # Check if we have any events at all (maybe they tested before)
-    historical_events_check = check_historical_events
-    return historical_events_check if historical_events_check[:success]
-
-    # No events found
-    no_events_response
+    if recent_events_check[:success]
+      recent_events_check
+    else
+      # Check if we have any events at all (maybe they tested before)
+      historical_events_check = check_historical_events
+      if historical_events_check[:success]
+        historical_events_check
+      else
+        # No events found
+        no_events_response
+      end
+    end
   rescue => e
     error_response("Connection test failed: #{e.message}")
   end

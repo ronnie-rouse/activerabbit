@@ -85,13 +85,17 @@ class AccountSlackNotificationService
     end
 
     def determine_channel(user)
-    if user
-      preferences = @account.user_notification_preferences(user)
-      personal_channel = preferences["personal_channel"]
-      return personal_channel if personal_channel.present?
-    end
-
-    @account.slack_channel
+      if user
+        preferences = @account.user_notification_preferences(user)
+        personal_channel = preferences["personal_channel"]
+        if personal_channel.present?
+          personal_channel
+        else
+          @account.slack_channel
+        end
+      else
+        @account.slack_channel
+      end
     end
 
     def should_notify_user?(user, notification_type)

@@ -66,39 +66,48 @@ class PerformanceIngestJob
 
   private
     def should_alert_for_performance?(event)
-    return false unless event.duration_ms
+      if event.duration_ms
+        # Alert conditions:
+        # 1. Very slow request (>5 seconds)
+        # 2. N+1 query detected
+        # 3. Unusual spike in response time compared to recent average
 
-    # Alert conditions:
-    # 1. Very slow request (>5 seconds)
-    # 2. N+1 query detected
-    # 3. Unusual spike in response time compared to recent average
-
-    return true if event.duration_ms > 5000 # 5 seconds
-    ctx = event.context || {}
-    return true if ctx.is_a?(Hash) && (ctx["n_plus_one_detected"] || ctx[:n_plus_one_detected])
-
-    # Check for performance spike
-    recent_avg = calculate_recent_average_duration(event)
-    if recent_avg && event.duration_ms > recent_avg * 3 # 3x slower than average
-      return true
-    end
-
-    false
+        if event.duration_ms > 5000 # 5 seconds
+          true
+        else
+          ctx = event.context || {}
+          if ctx.is_a?(Hash) && (ctx["n_plus_one_detected"] || ctx[:n_plus_one_detected])
+            true
+          else
+            # Check for performance spike
+            recent_avg = calculate_recent_average_duration(event)
+            if recent_avg && event.duration_ms > recent_avg * 3 # 3x slower than average
+              true
+            else
+              false
+            end
+          end
+        end
+      else
+        false
+      end
     end
 
     def calculate_recent_average_duration(event)
-    return nil unless event.target.present?
+      return nil unless event.target.present?
 
-    # Average duration for this target (controller#action or job class) in the last hour
-    recent_events = PerformanceEvent
-                      .where(project: event.project)
-                      .where(target: event.target)
-                      .where("occurred_at > ?", 1.hour.ago)
-                      .where.not(duration_ms: nil)
-                      .limit(100)
+      # Average duration for this target (controller#action or job class) in the last hour
+      recent_events = PerformanceEvent
+                        .where(project: event.project)
+                        .where(target: event.target)
+                        .where("occurred_at > ?", 1.hour.ago)
+                        .where.not(duration_ms: nil)
+                        .limit(100)
 
-    return nil if recent_events.count < 5
-
-    recent_events.average(:duration_ms)
+      if recent_events.count < 5
+        nil
+      else
+        recent_events.average(:duration_ms)
+      end
     end
 end
