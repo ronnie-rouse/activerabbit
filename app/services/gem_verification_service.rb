@@ -23,8 +23,7 @@ class GemVerificationService
   end
 
   private
-
-  def check_recent_events
+    def check_recent_events
     recent_events = project.events.where("created_at > ?", verification_window)
 
     if recent_events.any?
@@ -32,9 +31,9 @@ class GemVerificationService
     else
       { success: false, reason: :no_recent_events }
     end
-  end
+    end
 
-  def check_historical_events
+    def check_historical_events
     all_events = project.events.limit(1)
 
     if all_events.any?
@@ -42,16 +41,16 @@ class GemVerificationService
     else
       { success: false, reason: :no_events_ever }
     end
-  end
+    end
 
-  def no_events_response
+    def no_events_response
     error_response(
       "No events received from your application. Please ensure the gem is properly installed and configured.",
       :no_events_detected
     )
-  end
+    end
 
-  def success_response(message)
+    def success_response(message)
     {
       success: true,
       message: message,
@@ -60,9 +59,9 @@ class GemVerificationService
       events_count: project.events.count,
       last_event_at: project.events.order(:created_at).last&.created_at
     }
-  end
+    end
 
-  def error_response(message, error_code = :connection_failed)
+    def error_response(message, error_code = :connection_failed)
     {
       success: false,
       error: message,
@@ -71,9 +70,9 @@ class GemVerificationService
       project_name: project.name,
       suggestions: error_suggestions(error_code)
     }
-  end
+    end
 
-  def error_suggestions(error_code)
+    def error_suggestions(error_code)
     case error_code
     when :no_events_detected
       [
@@ -95,9 +94,9 @@ class GemVerificationService
         "Contact support if the issue persists"
       ]
     end
-  end
+    end
 
-  def verification_window
+    def verification_window
     30.seconds.ago
-  end
+    end
 end

@@ -23,8 +23,7 @@ class SecurityController < ApplicationController
   end
 
   private
-
-  def set_project
+    def set_project
     @project = current_user.projects.find(params[:project_id])
-  end
+    end
 end

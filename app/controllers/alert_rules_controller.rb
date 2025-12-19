@@ -65,23 +65,22 @@ class AlertRulesController < ApplicationController
   end
 
   private
-
-  def set_project
+    def set_project
     @project = current_user.projects.find(params[:project_id])
-  end
+    end
 
-  def set_alert_rule
+    def set_alert_rule
     @alert_rule = @project.alert_rules.find(params[:id])
-  end
+    end
 
-  def alert_rule_params
+    def alert_rule_params
     params.require(:alert_rule).permit(
       :name, :rule_type, :threshold_value, :time_window_minutes,
       :cooldown_minutes, :enabled, conditions: {}
     )
-  end
+    end
 
-  def generate_test_payload(alert_rule)
+    def generate_test_payload(alert_rule)
     case alert_rule.rule_type
     when "error_frequency"
       {
@@ -117,5 +116,5 @@ class AlertRulesController < ApplicationController
     else
       { test: true }
     end
-  end
+    end
 end

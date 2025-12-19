@@ -41,13 +41,12 @@ class GithubPrService
   end
 
   private
-
-  def configured?
+    def configured?
     (@project_pat.present? || @installation_id.present? || @env_pat.present?) && @github_repo.present?
-  end
+    end
 
-  # Minimal flow: create a branch off default, create a draft PR with RCA body
-  public def create_pr_for_issue(issue)
+    # Minimal flow: create a branch off default, create a draft PR with RCA body
+    public def create_pr_for_issue(issue)
     return { success: false, error: "GitHub integration not configured" } unless configured?
 
     owner, repo = @github_repo.split("/", 2)
@@ -92,12 +91,12 @@ class GithubPrService
     else
       { success: false, error: pr[:error] || "Unknown PR error" }
     end
-  rescue => e
+    rescue => e
     Rails.logger.error "GitHub PR creation failed: #{e.class}: #{e.message}"
     { success: false, error: e.message }
-  end
+    end
 
-  def build_pr_body(issue)
+    def build_pr_body(issue)
     lines = []
     lines << "### Root Cause Analysis"
     lines << (issue.ai_summary.presence || "Automated RCA will be added.")
@@ -107,9 +106,9 @@ class GithubPrService
     lines << "\n### Tests"
     lines << "- [ ] Add/verify tests reproducing the error and the fix"
     lines.join("\n\n")
-  end
+    end
 
-  def generate_installation_token(installation_id)
+    def generate_installation_token(installation_id)
     return nil unless installation_id.present?
     # Prefer per-project app creds; fallback to env.
     app_id = @project_app_id.presence || @env_app_id
@@ -119,38 +118,38 @@ class GithubPrService
     jwt = generate_app_jwt(app_id, pk_pem)
     resp = http_post_json("https://api.github.com/app/installations/#{installation_id}/access_tokens", nil, { "Authorization" => "Bearer #{jwt}", "Accept" => "application/vnd.github+json" })
     resp&.dig("token")
-  end
+    end
 
-  def generate_app_jwt(app_id, pk_pem)
+    def generate_app_jwt(app_id, pk_pem)
     require "openssl"
     require "jwt"
     private_key = OpenSSL::PKey::RSA.new(pk_pem)
     payload = { iat: Time.now.to_i - 60, exp: Time.now.to_i + (10 * 60), iss: app_id.to_i }
     JWT.encode(payload, private_key, "RS256")
-  end
+    end
 
-  def github_get(path, token)
+    def github_get(path, token)
     http_json("https://api.github.com#{path}", { "Authorization" => "Bearer #{token}", "Accept" => "application/vnd.github+json" })
-  end
+    end
 
-  def github_post(path, token, body)
+    def github_post(path, token, body)
     http_post_json("https://api.github.com#{path}", body, { "Authorization" => "Bearer #{token}", "Accept" => "application/vnd.github+json" })
-  end
+    end
 
-  def github_patch(path, token, body)
+    def github_patch(path, token, body)
     http_patch_json("https://api.github.com#{path}", body, { "Authorization" => "Bearer #{token}", "Accept" => "application/vnd.github+json" })
-  end
+    end
 
-  def detect_default_branch(owner, repo, token)
+    def detect_default_branch(owner, repo, token)
     repo_json = github_get("/repos/#{owner}/#{repo}", token)
     default_branch = repo_json.is_a?(Hash) ? repo_json["default_branch"] : nil
     Rails.logger.info "[GitHub API] default_branch=#{default_branch.inspect} for #{owner}/#{repo}"
     default_branch
-  rescue
+    rescue
     nil
-  end
+    end
 
-  def http_json(url, headers)
+    def http_json(url, headers)
     require "net/http"
     require "json"
     uri = URI(url)
@@ -159,9 +158,9 @@ class GithubPrService
     res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
     Rails.logger.info "[GitHub API] GET #{uri.path} status=#{res.code}"
     JSON.parse(res.body)
-  end
+    end
 
-  def http_post_json(url, body, headers)
+    def http_post_json(url, body, headers)
     require "net/http"
     require "json"
     uri = URI(url)
@@ -175,9 +174,9 @@ class GithubPrService
     else
       JSON.parse(res.body) rescue {}
     end
-  end
+    end
 
-  def http_patch_json(url, body, headers)
+    def http_patch_json(url, body, headers)
     require "net/http"
     require "json"
     uri = URI(url)
@@ -191,10 +190,10 @@ class GithubPrService
     else
       JSON.parse(res.body) rescue {}
     end
-  end
+    end
 
-  # Create a placeholder commit on the new branch if it has no changes yet
-  def ensure_branch_has_changes(owner, repo, token, branch, base_commit_sha, pr_body)
+    # Create a placeholder commit on the new branch if it has no changes yet
+    def ensure_branch_has_changes(owner, repo, token, branch, base_commit_sha, pr_body)
     # 1) Get base commit to fetch its tree
     base_commit = github_get("/repos/#{owner}/#{repo}/git/commits/#{base_commit_sha}", token)
     base_tree_sha = base_commit.is_a?(Hash) ? base_commit["tree"]&.dig("sha") : nil
@@ -249,9 +248,9 @@ class GithubPrService
     else
       { error: "Failed to read base commit" }
     end
-  end
+    end
 
-  def generate_optimization_suggestions(sql_fingerprint)
+    def generate_optimization_suggestions(sql_fingerprint)
     query = sql_fingerprint.normalized_query
     controller_action = sql_fingerprint.controller_action
 
@@ -286,26 +285,26 @@ class GithubPrService
     end
 
     suggestions
-  end
+    end
 
-  # Mock GitHub API integration methods
-  # In a real implementation, these would use the GitHub API
+    # Mock GitHub API integration methods
+    # In a real implementation, these would use the GitHub API
 
-  def create_branch(branch_name)
+    def create_branch(branch_name)
     # GitHub API: POST /repos/:owner/:repo/git/refs
     true
-  end
+    end
 
-  def create_file(branch_name, file_path, content, message)
+    def create_file(branch_name, file_path, content, message)
     # GitHub API: PUT /repos/:owner/:repo/contents/:path
     true
-  end
+    end
 
-  def create_pull_request(branch_name, title, body)
+    def create_pull_request(branch_name, title, body)
     # GitHub API: POST /repos/:owner/:repo/pulls
     {
       html_url: "https://github.com/#{@github_repo}/pull/123",
       number: 123
     }
-  end
+    end
 end

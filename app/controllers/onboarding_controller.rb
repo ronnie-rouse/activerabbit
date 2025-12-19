@@ -67,14 +67,13 @@ class OnboardingController < ApplicationController
   end
 
   private
-
-  def project_params
+    def project_params
     params.require(:project).permit(:name, :url, :description, :tech_stack)
-  end
+    end
 
-  def redirect_if_has_projects
+    def redirect_if_has_projects
     if current_user.projects.any?
       redirect_to dashboard_path
     end
-  end
+    end
 end

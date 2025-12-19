@@ -54,9 +54,8 @@ class PerformanceEvent < ApplicationRecord
   end
 
   private
-
-  def set_defaults
+    def set_defaults
     self.occurred_at ||= Time.current
     self.environment ||= "production"
-  end
+    end
 end

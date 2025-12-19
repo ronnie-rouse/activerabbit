@@ -39,12 +39,11 @@ class SlackAuthController < ApplicationController
   end
 
   private
-
-  def callback_url
+    def callback_url
     slack_oauth_callback_url
-  end
+    end
 
-  def exchange_code_for_token(code)
+    def exchange_code_for_token(code)
     conn = Faraday.new(url: "https://slack.com")
     response = conn.post(
       "/api/oauth.v2.access",
@@ -56,17 +55,17 @@ class SlackAuthController < ApplicationController
     )
 
     JSON.parse(response.body)
-  end
+    end
 
-  def save_slack_credentials(data)
+    def save_slack_credentials(data)
     @project.update!(
       slack_access_token: data["access_token"],
       slack_team_id: data.dig("team", "id"),
       slack_team_name: data.dig("team", "name")
     )
-  end
+    end
 
-  def set_project_for_authorize
+    def set_project_for_authorize
     @project = current_user.projects.find(params[:project_id] || params[:id])
-  end
+    end
 end

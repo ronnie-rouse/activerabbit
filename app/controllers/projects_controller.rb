@@ -84,19 +84,18 @@ class ProjectsController < ApplicationController
 
 
   private
-
-  def set_project
+    def set_project
     @project = current_account.projects.find(params[:id])
-  end
+    end
 
-  def project_params
+    def project_params
     params.require(:project).permit(:name, :description, :environment, :active, :url, :tech_stack, settings: {})
-  end
+    end
 
-  def check_project_quota
+    def check_project_quota
     return if current_account.within_quota?(:projects)
 
     flash[:alert] = "You've reached your project limit (#{current_account.projects_quota} projects on #{current_account.effective_plan_name} plan). Please upgrade your plan to add more projects."
     redirect_to plan_path
-  end
+    end
 end

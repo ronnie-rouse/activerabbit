@@ -23,12 +23,11 @@ class AiPerformanceSummaryService
   end
 
   private
-
-  def api_key
+    def api_key
     ENV["OPENAI_API_KEY"]
-  end
+    end
 
-  def client_completion(content)
+    def client_completion(content)
     require "net/http"
     require "json"
 
@@ -55,9 +54,9 @@ class AiPerformanceSummaryService
 
     json = JSON.parse(res.body)
     json.dig("choices", 0, "message", "content")
-  end
+    end
 
-  def build_content
+    def build_content
     parts = []
     parts << "Target: #{@target}"
     parts << "Recent stats:"
@@ -76,5 +75,5 @@ class AiPerformanceSummaryService
 
     parts << "\nWrite: RCA, suggested code changes, and tests."
     parts.join("\n")
-  end
+    end
 end

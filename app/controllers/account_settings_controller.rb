@@ -67,14 +67,13 @@ class AccountSettingsController < ApplicationController
   end
 
   private
-
-  def ensure_account_access
+    def ensure_account_access
     # Users can only modify their own account settings
     # In the future, could add admin role checks here
     redirect_to root_path, alert: "Access denied." unless current_account
-  end
+    end
 
-  def update_slack_settings
+    def update_slack_settings
     slack_params = params.require(:account).permit(:slack_webhook_url, :slack_channel, :slack_notifications_enabled)
 
     # Update individual settings
@@ -89,9 +88,9 @@ class AccountSettingsController < ApplicationController
     end
 
     @account.save
-  end
+    end
 
-  def test_slack_notification
+    def test_slack_notification
     begin
       slack_service = AccountSlackNotificationService.new(@account)
       slack_service.send_custom_alert(
@@ -109,5 +108,5 @@ class AccountSettingsController < ApplicationController
       redirect_to account_settings_path,
                   alert: "Settings saved, but test notification failed: #{e.message}"
     end
-  end
+    end
 end

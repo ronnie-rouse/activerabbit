@@ -336,12 +336,11 @@ class ErrorsController < ApplicationController
   end
 
   private
-
-  def issue_params
+    def issue_params
     params.require(:issue).permit(:status)
-  end
+    end
 
-  def set_project
+    def set_project
     @project = current_user.projects.find(params[:project_id])
-  end
+    end
 end

@@ -31,18 +31,17 @@ class BillingPortalController < ApplicationController
   end
 
   private
-
-  def ensure_stripe_customer!(user)
+    def ensure_stripe_customer!(user)
     if user.payment_processor.processor_id.blank?
       recreate_stripe_customer!(user)
     end
-  end
+    end
 
-  def recreate_stripe_customer!(user)
+    def recreate_stripe_customer!(user)
     stripe_customer = Stripe::Customer.create(
       email: user.email,
       metadata: { user_id: user.id, account_id: user.account_id }
     )
     user.payment_processor.update!(processor_id: stripe_customer.id)
-  end
+    end
 end

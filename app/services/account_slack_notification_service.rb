@@ -69,8 +69,7 @@ class AccountSlackNotificationService
   end
 
   private
-
-  def send_notification(message, user = nil)
+    def send_notification(message, user = nil)
     channel = determine_channel(user)
 
     notifier = Slack::Notifier.new(@webhook_url) do
@@ -80,12 +79,12 @@ class AccountSlackNotificationService
     end
 
     notifier.post(message)
-  rescue StandardError => e
+    rescue StandardError => e
     Rails.logger.error "Failed to send account Slack notification: #{e.message}"
     raise e
-  end
+    end
 
-  def determine_channel(user)
+    def determine_channel(user)
     if user
       preferences = @account.user_notification_preferences(user)
       personal_channel = preferences["personal_channel"]
@@ -93,34 +92,34 @@ class AccountSlackNotificationService
     end
 
     @account.slack_channel
-  end
+    end
 
-  def should_notify_user?(user, notification_type)
+    def should_notify_user?(user, notification_type)
     return true unless user # For system-wide notifications
 
     return false unless @account.slack_notifications_enabled?
 
     preferences = @account.user_notification_preferences(user)
     preferences[notification_type] == true
-  end
+    end
 
-  def account_url
+    def account_url
     if Rails.env.development?
       "http://localhost:3000/account/settings"
     else
       "#{ENV.fetch('APP_HOST', 'https://activerabbit.com')}/account/settings"
     end
-  end
+    end
 
-  def project_url(project)
+    def project_url(project)
     if Rails.env.development?
       "http://localhost:3000/projects/#{project.slug}"
     else
       "#{ENV.fetch('APP_HOST', 'https://activerabbit.com')}/projects/#{project.slug}"
     end
-  end
+    end
 
-  def build_error_frequency_message(issue, payload, user)
+    def build_error_frequency_message(issue, payload, user)
     user_mention = user ? "<@#{user.email}> " : ""
 
     {
@@ -186,9 +185,9 @@ class AccountSlackNotificationService
         }
       ]
     }
-  end
+    end
 
-  def build_performance_message(event, payload, user)
+    def build_performance_message(event, payload, user)
     user_mention = user ? "<@#{user.email}> " : ""
 
     {
@@ -248,9 +247,9 @@ class AccountSlackNotificationService
         }
       ]
     }
-  end
+    end
 
-  def build_n_plus_one_message(payload, user)
+    def build_n_plus_one_message(payload, user)
     user_mention = user ? "<@#{user.email}> " : ""
     incidents = payload["incidents"]
     controller_action = payload["controller_action"]
@@ -298,9 +297,9 @@ class AccountSlackNotificationService
         }
       ]
     }
-  end
+    end
 
-  def build_new_issue_message(issue, user)
+    def build_new_issue_message(issue, user)
     user_mention = user ? "<@#{user.email}> " : ""
 
     {
@@ -371,9 +370,9 @@ class AccountSlackNotificationService
         }
       ]
     }
-  end
+    end
 
-  def build_custom_message(title, message, color, user)
+    def build_custom_message(title, message, color, user)
     user_mention = user ? "<@#{user.email}> " : ""
 
     {
@@ -400,5 +399,5 @@ class AccountSlackNotificationService
         }
       ]
     }
-  end
+    end
 end

@@ -172,8 +172,7 @@ class Issue < ApplicationRecord
   end
 
   private
-
-  def self.generate_fingerprint(exception_class, top_frame, controller_action)
+    def self.generate_fingerprint(exception_class, top_frame, controller_action)
     # Normalize top frame (remove line numbers, normalize paths)
     normalized_frame = top_frame.gsub(/:\d+/, ":N").gsub(/\/\d+\//, "/N/")
 
@@ -184,5 +183,5 @@ class Issue < ApplicationRecord
     ].compact
 
     Digest::SHA256.hexdigest(components.join("|"))
-  end
+    end
 end

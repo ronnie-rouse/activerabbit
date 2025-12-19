@@ -55,16 +55,15 @@ class ApiToken < ApplicationRecord
   end
 
   private
-
-  def generate_token
-    loop do
-      self.token = SecureRandom.hex(32)
-      break unless self.class.exists?(token: self.token)
+    def generate_token
+      loop do
+        self.token = SecureRandom.hex(32)
+        break unless self.class.exists?(token: self.token)
+      end
     end
-  end
 
-  def set_defaults
-    self.active = true if active.nil?
-    self.usage_count = 0 if usage_count.nil?
-  end
+    def set_defaults
+      self.active = true if active.nil?
+      self.usage_count = 0 if usage_count.nil?
+    end
 end

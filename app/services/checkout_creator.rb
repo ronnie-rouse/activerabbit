@@ -20,32 +20,31 @@ class CheckoutCreator
   end
 
   private
-
-  def ensure_pay_customer!
+    def ensure_pay_customer!
     @user.set_payment_processor :stripe if @user.payment_processor.blank?
     if @user.payment_processor.processor_id.blank?
       recreate_stripe_customer!
     end
-  end
+    end
 
-  def recreate_stripe_customer!
+    def recreate_stripe_customer!
     stripe_customer = Stripe::Customer.create(
       email: @user.email,
       metadata: { user_id: @user.id, account_id: @account.id }
     )
     @user.payment_processor.update!(processor_id: stripe_customer.id)
-  end
+    end
 
-  def build_line_items
+    def build_line_items
     items = [{ price: price_for_plan(@plan, @interval), quantity: 1 }]
     if @ai
       items << { price: ai_base_price, quantity: 1 }
       items << { price: ENV.fetch("STRIPE_PRICE_AI_OVERAGE_METERED"), quantity: 1 }
     end
     items
-  end
+    end
 
-  def create_checkout_session!
+    def create_checkout_session!
     Stripe::Checkout::Session.create(
       mode: "subscription",
       customer: @user.payment_processor.processor_id,
@@ -66,7 +65,7 @@ class CheckoutCreator
       },
       line_items: build_line_items
     )
-  rescue Stripe::InvalidRequestError => e
+    rescue Stripe::InvalidRequestError => e
     # Recover from stale / deleted Stripe customers, then retry once
     if e.message&.include?("No such customer")
       Rails.logger.warn "Stripe customer missing for user #{@user.id}, recreating: #{e.message}"
@@ -94,9 +93,9 @@ class CheckoutCreator
     else
       raise
     end
-  end
+    end
 
-  def price_for_plan(plan, interval)
+    def price_for_plan(plan, interval)
     case [plan, interval]
     when ["team", "month"]      then ENV.fetch("STRIPE_PRICE_TEAM_MONTHLY")
     when ["team", "year"]       then ENV.fetch("STRIPE_PRICE_TEAM_ANNUAL", ENV["STRIPE_PRICE_TEAM_MONTHLY"])
@@ -104,24 +103,24 @@ class CheckoutCreator
     when ["business", "year"]   then ENV.fetch("STRIPE_PRICE_BUSINESS_ANNUAL", ENV["STRIPE_PRICE_BUSINESS_MONTHLY"])
     else raise ArgumentError, "unknown plan/interval: #{plan}/#{interval}"
     end
-  end
+    end
 
-  def ai_base_price
+    def ai_base_price
     @interval == "year" ? ENV.fetch("STRIPE_PRICE_AI_ANNUAL") : ENV.fetch("STRIPE_PRICE_AI_MONTHLY")
-  end
+    end
 
-  def idempotency_key
+    def idempotency_key
     "checkout:#{@account.id}:#{@plan}:#{@interval}:#{@ai}"
-  end
+    end
 
-  def success_url
+    def success_url
     host = ENV.fetch("APP_HOST")
     plan_q = CGI.escape(@plan.to_s)
     interval_q = CGI.escape(@interval.to_s)
     Rails.application.routes.url_helpers.dashboard_url(host: host) + "?subscribed=1&plan=#{plan_q}&interval=#{interval_q}"
-  end
+    end
 
-  def cancel_url
+    def cancel_url
     Rails.application.routes.url_helpers.settings_url(host: ENV.fetch("APP_HOST")) + "?canceled=1"
-  end
+    end
 end

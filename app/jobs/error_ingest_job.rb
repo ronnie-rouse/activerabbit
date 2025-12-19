@@ -73,8 +73,7 @@ class ErrorIngestJob
   end
 
   private
-
-  def should_alert_for_issue?(issue)
+    def should_alert_for_issue?(issue)
     return false unless issue.status == "open"
 
     # Alert conditions:
@@ -94,5 +93,5 @@ class ErrorIngestJob
     return true if recent_events >= 10
 
     false
-  end
+    end
 end

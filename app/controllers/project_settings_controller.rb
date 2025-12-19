@@ -55,8 +55,7 @@ class ProjectSettingsController < ApplicationController
   end
 
   private
-
-  def set_project
+    def set_project
     # Use @current_project set by ApplicationController for slug-based routes
     # or find by project_id for regular routes
     if @current_project
@@ -66,9 +65,9 @@ class ProjectSettingsController < ApplicationController
     else
       redirect_to dashboard_path, alert: "Project not found."
     end
-  end
+    end
 
-  def update_notification_settings
+    def update_notification_settings
     return true unless params[:project]
 
     notif_params = params
@@ -89,9 +88,9 @@ class ProjectSettingsController < ApplicationController
 
     @project.settings = settings
     @project.save
-  end
+    end
 
-  def update_github_settings
+    def update_github_settings
     gh_params = params.fetch(:project, {}).permit(:github_repo, :github_installation_id, :github_pat, :github_app_id, :github_app_pk, :github_app_pk_file)
     return true if gh_params.blank?
 
@@ -121,9 +120,9 @@ class ProjectSettingsController < ApplicationController
     end
     @project.settings = settings
     @project.save
-  end
+    end
 
-  def test_slack_notification
+    def test_slack_notification
     begin
       slack_service = SlackNotificationService.new(@project)
       slack_service.send_custom_alert(
@@ -139,9 +138,9 @@ class ProjectSettingsController < ApplicationController
       redirect_to project_settings_path(@project),
                   alert: "Settings saved, but test notification failed: #{e.message}"
     end
-  end
+    end
 
-  def update_notification_preferences
+    def update_notification_preferences
     prefs = params[:preferences]
     return true if prefs.blank?
 
@@ -151,5 +150,5 @@ class ProjectSettingsController < ApplicationController
     end
 
     true
-  end
+    end
 end

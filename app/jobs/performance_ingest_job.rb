@@ -14,8 +14,7 @@ class PerformanceIngestJob
   end
 
   private
-
-  def perform_with_tenant(project, payload, batch_id = nil)
+    def perform_with_tenant(project, payload, batch_id = nil)
     # Convert string keys to symbols if needed
     payload = payload.deep_symbolize_keys if payload.respond_to?(:deep_symbolize_keys)
 
@@ -56,18 +55,17 @@ class PerformanceIngestJob
 
     Rails.logger.info "Processed performance event for project #{project.slug}: #{event.id}"
 
-  rescue ActiveRecord::RecordNotFound => e
+    rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error "Project not found for performance ingest: #{project_id}"
     raise e
-  rescue => e
+    rescue => e
     Rails.logger.error "Error processing performance ingest: #{e.message}"
     Rails.logger.error e.backtrace.join("\n")
     raise e
-  end
+    end
 
   private
-
-  def should_alert_for_performance?(event)
+    def should_alert_for_performance?(event)
     return false unless event.duration_ms
 
     # Alert conditions:
@@ -86,9 +84,9 @@ class PerformanceIngestJob
     end
 
     false
-  end
+    end
 
-  def calculate_recent_average_duration(event)
+    def calculate_recent_average_duration(event)
     return nil unless event.target.present?
 
     # Average duration for this target (controller#action or job class) in the last hour
@@ -102,5 +100,5 @@ class PerformanceIngestJob
     return nil if recent_events.count < 5
 
     recent_events.average(:duration_ms)
-  end
+    end
 end

@@ -26,8 +26,7 @@ class SlackNotificationService
   end
 
   private
-
-  def send_message(message)
+    def send_message(message)
     return unless configured?
 
     @client.chat_postMessage(message.merge(
@@ -35,24 +34,24 @@ class SlackNotificationService
       username: @project.slack_team_name,
       icon_emoji: ":rabbit:"
     ))
-  rescue Slack::Web::Api::Errors::SlackError => e
+    rescue Slack::Web::Api::Errors::SlackError => e
     Rails.logger.error "Failed to send Slack message: #{e.message}"
-  end
+    end
 
-  def project_url
+    def project_url
     host = Rails.env.development? ? "http://localhost:3000" : ENV.fetch("APP_HOST", "https://activerabbit.com")
     "#{host}/#{@project.slug}"
-  end
+    end
 
-  def error_url(issue, tab: nil, event_id: nil)
+    def error_url(issue, tab: nil, event_id: nil)
     q = []
     q << "tab=#{tab}" if tab
     q << "event_id=#{event_id}" if event_id
     query = q.any? ? "?#{q.join('&')}" : ""
     "#{project_url}/errors/#{issue.id}#{query}"
-  end
+    end
 
-  def build_error_frequency_message(issue, payload)
+    def build_error_frequency_message(issue, payload)
     {
       text: "🚨 *High Error Frequency Alert*",
       attachments: [
@@ -115,9 +114,9 @@ class SlackNotificationService
         }
       ]
     }
-  end
+    end
 
-  def build_performance_message(event, payload)
+    def build_performance_message(event, payload)
     {
       text: "⚠️ *Performance Alert*",
       attachments: [
@@ -170,9 +169,9 @@ class SlackNotificationService
         }
       ]
     }
-  end
+    end
 
-  def build_n_plus_one_message(payload)
+    def build_n_plus_one_message(payload)
     incidents = payload["incidents"]
     controller_action = payload["controller_action"]
 
@@ -232,9 +231,9 @@ class SlackNotificationService
         }
       ]
     }
-  end
+    end
 
-  def build_new_issue_message(issue)
+    def build_new_issue_message(issue)
     {
       text: "🆕 *New Issue: #{issue.exception_class}*",
       attachments: [
@@ -307,9 +306,9 @@ class SlackNotificationService
         }
       ]
     }
-  end
+    end
 
-  def build_custom_message(title, message, color)
+    def build_custom_message(title, message, color)
     {
       text: title,
       attachments: [
@@ -339,5 +338,5 @@ class SlackNotificationService
         }
       ]
     }
-  end
+    end
 end
