@@ -110,21 +110,27 @@ class Issue < ApplicationRecord
   # Impact percentage (errors in last 24h / total requests in last 24h)
   # Note: This requires tracking total requests, which we'll estimate from all events
   def impact_percentage_24h
-    return 0.0 if project.nil?
+    if project.nil?
+      0.0
+    else
+      error_count = events_last_24h
+      if error_count.zero?
+        0.0
+      else
+        # Get total events for the project in last 24h as a proxy for total requests
+        total_events = ActsAsTenant.without_tenant do
+          Event.where(project_id: project.id)
+               .where("occurred_at > ?", 24.hours.ago)
+               .count
+        end
 
-    error_count = events_last_24h
-    return 0.0 if error_count.zero?
-
-    # Get total events for the project in last 24h as a proxy for total requests
-    total_events = ActsAsTenant.without_tenant do
-      Event.where(project_id: project.id)
-           .where("occurred_at > ?", 24.hours.ago)
-           .count
+        if total_events.zero?
+          0.0
+        else
+          ((error_count.to_f / total_events.to_f) * 100).round(2)
+        end
+      end
     end
-
-    return 0.0 if total_events.zero?
-
-    ((error_count.to_f / total_events.to_f) * 100).round(2)
   end
 
   # Construct full URL from most recent event
@@ -140,16 +146,18 @@ class Issue < ApplicationRecord
     port = req["server_port"] || req[:server_port]
     path = recent_event.request_path || req["request_path"] || req[:request_path]
 
-    return nil if host.blank? || path.blank?
+    if host.blank? || path.blank?
+      nil
+    else
+      # Determine scheme (https if port 443, otherwise http)
+      scheme = (port.to_s == "443") ? "https" : "http"
 
-    # Determine scheme (https if port 443, otherwise http)
-    scheme = (port.to_s == "443") ? "https" : "http"
-
-    # Build URL
-    url = "#{scheme}://#{host}"
-    url += ":#{port}" if port.present? && !["80", "443"].include?(port.to_s)
-    url += path
-    url
+      # Build URL
+      url = "#{scheme}://#{host}"
+      url += ":#{port}" if port.present? && !["80", "443"].include?(port.to_s)
+      url += path
+      url
+    end
   end
 
   def self.ransackable_attributes(auth_object = nil)

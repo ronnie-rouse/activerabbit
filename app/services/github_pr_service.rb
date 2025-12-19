@@ -170,8 +170,11 @@ class GithubPrService
     req.body = body ? JSON.generate(body) : ""
     res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
     Rails.logger.info "[GitHub API] POST #{uri.path} status=#{res.code}"
-    return { error: "HTTP #{res.code}" } if res.code.to_i >= 400
-    JSON.parse(res.body) rescue {}
+    if res.code.to_i >= 400
+      { error: "HTTP #{res.code}" }
+    else
+      JSON.parse(res.body) rescue {}
+    end
   end
 
   def http_patch_json(url, body, headers)
@@ -183,8 +186,11 @@ class GithubPrService
     req.body = body ? JSON.generate(body) : ""
     res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
     Rails.logger.info "[GitHub API] PATCH #{uri.path} status=#{res.code}"
-    return { error: "HTTP #{res.code}" } if res.code.to_i >= 400
-    JSON.parse(res.body) rescue {}
+    if res.code.to_i >= 400
+      { error: "HTTP #{res.code}" }
+    else
+      JSON.parse(res.body) rescue {}
+    end
   end
 
   # Create a placeholder commit on the new branch if it has no changes yet
@@ -192,45 +198,57 @@ class GithubPrService
     # 1) Get base commit to fetch its tree
     base_commit = github_get("/repos/#{owner}/#{repo}/git/commits/#{base_commit_sha}", token)
     base_tree_sha = base_commit.is_a?(Hash) ? base_commit["tree"]&.dig("sha") : nil
-    return { error: "Failed to read base commit" } unless base_tree_sha
-
-    # 2) Create a blob with PR context
-    content = "Automated PR context from ActiveRabbit\n\n" + pr_body.to_s
-    blob = github_post("/repos/#{owner}/#{repo}/git/blobs", token, { content: content, encoding: "utf-8" })
-    blob_sha = blob.is_a?(Hash) ? blob["sha"] : nil
-    return { error: "Failed to create blob" } unless blob_sha
-
-    # 3) Create a tree including the new file
-    path = "activerabbit/AR_PR_CONTEXT.md"
-    tree = github_post("/repos/#{owner}/#{repo}/git/trees", token, {
-      base_tree: base_tree_sha,
-      tree: [
-        { path: path, mode: "100644", type: "blob", sha: blob_sha }
-      ]
-    })
-    new_tree_sha = tree.is_a?(Hash) ? tree["sha"] : nil
-    return { error: "Failed to create tree" } unless new_tree_sha
-
-    # 4) Create a commit
-    commit = github_post("/repos/#{owner}/#{repo}/git/commits", token, {
-      message: "chore: add PR context file for automated PR",
-      tree: new_tree_sha,
-      parents: [base_commit_sha]
-    })
-    new_commit_sha = commit.is_a?(Hash) ? commit["sha"] : nil
-    return { error: "Failed to create commit" } unless new_commit_sha
-
-    # 5) Move the branch ref to the new commit
-    ref_update = github_patch("/repos/#{owner}/#{repo}/git/refs/heads/#{branch}", token, {
-      sha: new_commit_sha,
-      force: false
-    })
-    if ref_update.is_a?(Hash) && ref_update[:error]
-      return { error: ref_update[:error] }
+    
+    if base_tree_sha
+      # 2) Create a blob with PR context
+      content = "Automated PR context from ActiveRabbit\n\n" + pr_body.to_s
+      blob = github_post("/repos/#{owner}/#{repo}/git/blobs", token, { content: content, encoding: "utf-8" })
+      blob_sha = blob.is_a?(Hash) ? blob["sha"] : nil
+      
+      if blob_sha
+        # 3) Create a tree including the new file
+        path = "activerabbit/AR_PR_CONTEXT.md"
+        tree = github_post("/repos/#{owner}/#{repo}/git/trees", token, {
+          base_tree: base_tree_sha,
+          tree: [
+            { path: path, mode: "100644", type: "blob", sha: blob_sha }
+          ]
+        })
+        new_tree_sha = tree.is_a?(Hash) ? tree["sha"] : nil
+        
+        if new_tree_sha
+          # 4) Create a commit
+          commit = github_post("/repos/#{owner}/#{repo}/git/commits", token, {
+            message: "chore: add PR context file for automated PR",
+            tree: new_tree_sha,
+            parents: [base_commit_sha]
+          })
+          new_commit_sha = commit.is_a?(Hash) ? commit["sha"] : nil
+          
+          if new_commit_sha
+            # 5) Move the branch ref to the new commit
+            ref_update = github_patch("/repos/#{owner}/#{repo}/git/refs/heads/#{branch}", token, {
+              sha: new_commit_sha,
+              force: false
+            })
+            if ref_update.is_a?(Hash) && ref_update[:error]
+              { error: ref_update[:error] }
+            else
+              Rails.logger.info "[GitHub API] Added placeholder commit #{new_commit_sha[0, 7]} to #{branch}"
+              true
+            end
+          else
+            { error: "Failed to create commit" }
+          end
+        else
+          { error: "Failed to create tree" }
+        end
+      else
+        { error: "Failed to create blob" }
+      end
+    else
+      { error: "Failed to read base commit" }
     end
-
-    Rails.logger.info "[GitHub API] Added placeholder commit #{new_commit_sha[0, 7]} to #{branch}"
-    true
   end
 
   def generate_optimization_suggestions(sql_fingerprint)

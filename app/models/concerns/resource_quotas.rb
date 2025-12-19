@@ -151,8 +151,11 @@ module ResourceQuotas
     used = usage_for_resource(resource_type)
     quota = quota_for_resource_by_type(resource_type)
 
-    return false unless used && quota
-    used < quota
+    if used && quota
+      used < quota
+    else
+      false
+    end
   end
 
   # Calculate usage percentage for a specific resource type
@@ -166,10 +169,15 @@ module ResourceQuotas
     used = usage_for_resource(resource_type)
     quota = quota_for_resource_by_type(resource_type)
 
-    return 0.0 unless used && quota
-    return 0.0 if quota.zero?
-
-    ((used.to_f / quota) * 100).round(2)
+    if used && quota
+      if quota.zero?
+        0.0
+      else
+        ((used.to_f / quota) * 100).round(2)
+      end
+    else
+      0.0
+    end
   end
 
   # Get usage summary for all resources
