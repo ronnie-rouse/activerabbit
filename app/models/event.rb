@@ -76,13 +76,12 @@ class Event < ApplicationRecord
   end
 
   private
-
-  def set_defaults
+    def set_defaults
     self.occurred_at ||= Time.current
     self.environment ||= "production"
-  end
+    end
 
-  def self.extract_top_frame(backtrace)
+    def self.extract_top_frame(backtrace)
     return "unknown" if backtrace.blank?
 
     frames = backtrace.is_a?(Array) ? backtrace : backtrace.split("\n")
@@ -96,9 +95,9 @@ class Event < ApplicationRecord
     end
 
     app_frame || frames.first || "unknown"
-  end
+    end
 
-  def self.extract_controller_from_backtrace(backtrace)
+    def self.extract_controller_from_backtrace(backtrace)
     return "unknown" if backtrace.blank?
 
     frames = backtrace.is_a?(Array) ? backtrace : backtrace.split("\n")
@@ -119,9 +118,9 @@ class Event < ApplicationRecord
     else
       "BackgroundJob" # Assume background job if no controller found
     end
-  end
+    end
 
-  def self.scrub_pii(payload)
+    def self.scrub_pii(payload)
     return payload unless payload.is_a?(Hash)
 
     scrubbed = payload.deep_dup
@@ -142,5 +141,5 @@ class Event < ApplicationRecord
     end
 
     scrubbed
-  end
+    end
 end

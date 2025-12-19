@@ -128,8 +128,7 @@ class PerfRollup < ApplicationRecord
   end
 
   private
-
-  def self.percentile(sorted_array, percentile)
+    def self.percentile(sorted_array, percentile)
     return nil if sorted_array.empty?
     return sorted_array.first if sorted_array.length == 1
 
@@ -145,5 +144,5 @@ class PerfRollup < ApplicationRecord
       weight = index - lower_index
       lower_value + weight * (upper_value - lower_value)
     end
-  end
+    end
 end

@@ -76,12 +76,11 @@ class EventsController < ApplicationController
   end
 
   private
-
-  def set_project
+    def set_project
     @project = current_user.projects.find(params[:project_id])
-  end
+    end
 
-  def set_event
+    def set_event
     @event = @project.events.find(params[:id])
-  end
+    end
 end

@@ -76,8 +76,7 @@ class SettingsController < ApplicationController
   end
 
   private
-
-  def update_account_slack_settings
+    def update_account_slack_settings
     return false unless @account
 
     slack_params = params.require(:account).permit(:slack_webhook_url, :slack_channel, :slack_notifications_enabled)
@@ -94,9 +93,9 @@ class SettingsController < ApplicationController
     end
 
     @account.save
-  end
+    end
 
-  def test_slack_notification_with_save
+    def test_slack_notification_with_save
     begin
       slack_service = AccountSlackNotificationService.new(@account)
       slack_service.send_custom_alert(
@@ -114,5 +113,5 @@ class SettingsController < ApplicationController
       redirect_to settings_path,
                   alert: "Settings saved, but test notification failed: #{e.message}"
     end
-  end
+    end
 end

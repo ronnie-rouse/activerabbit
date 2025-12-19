@@ -96,12 +96,11 @@ class IssuesController < ApplicationController
   end
 
   private
-
-  def set_project
+    def set_project
     @project = current_user.projects.find(params[:project_id])
-  end
+    end
 
-  def set_issue
+    def set_issue
     @issue = @project.issues.find(params[:id])
-  end
+    end
 end

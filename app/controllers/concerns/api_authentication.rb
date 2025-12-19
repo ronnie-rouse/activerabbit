@@ -15,8 +15,7 @@ module ApiAuthentication
   end
 
   private
-
-  def log_api_request
+    def log_api_request
     Rails.logger.info "🚀 API REQUEST from Remote App:"
     Rails.logger.info "  Method: #{request.method}"
     Rails.logger.info "  URL: #{request.url}"
@@ -27,9 +26,9 @@ module ApiAuthentication
     end
     Rails.logger.info "  Params: #{params.inspect}"
     Rails.logger.info "🚀 END API REQUEST"
-  end
+    end
 
-  def authenticate_api_token!
+    def authenticate_api_token!
     token_header = request.headers["X-Project-Token"]
 
     if token_header.blank?
@@ -53,13 +52,13 @@ module ApiAuthentication
       render_rate_limited
       nil
     end
-  end
+    end
 
-  def set_current_project
+    def set_current_project
     @current_project = @current_api_token&.project
-  end
+    end
 
-  def check_project_active
+    def check_project_active
     # If we've already rendered (e.g. unauthorized), don't override the response
     return if performed?
 
@@ -69,9 +68,9 @@ module ApiAuthentication
     unless @current_project.active?
       render_forbidden("Project is inactive")
     end
-  end
+    end
 
-  def rate_limited?(key, limit: 1000, window: 60) # 1000 requests per minute
+    def rate_limited?(key, limit: 1000, window: 60) # 1000 requests per minute
     current_count = Rails.cache.read("rate_limit:#{key}") || 0
 
     if current_count >= limit
@@ -80,45 +79,45 @@ module ApiAuthentication
       Rails.cache.write("rate_limit:#{key}", current_count + 1, expires_in: window.seconds)
       false
     end
-  end
+    end
 
-  def render_unauthorized(message = "Unauthorized")
+    def render_unauthorized(message = "Unauthorized")
     render json: {
       error: "unauthorized",
       message: message
     }, status: :unauthorized
-  end
+    end
 
-  def render_forbidden(message = "Forbidden")
+    def render_forbidden(message = "Forbidden")
     render json: {
       error: "forbidden",
       message: message
     }, status: :forbidden
-  end
+    end
 
-  def render_rate_limited
+    def render_rate_limited
     render json: {
       error: "rate_limited",
       message: "Too many requests. Please slow down."
     }, status: :too_many_requests
-  end
+    end
 
-  def render_not_found
+    def render_not_found
     render json: {
       error: "not_found",
       message: "Resource not found"
     }, status: :not_found
-  end
+    end
 
-  def render_validation_errors(exception)
+    def render_validation_errors(exception)
     render json: {
       error: "validation_failed",
       message: "Validation failed",
       details: exception.record.errors.full_messages
     }, status: :unprocessable_entity
-  end
+    end
 
-  def render_internal_error(exception)
+    def render_internal_error(exception)
     Rails.logger.error "API Error: #{exception.message}"
     Rails.logger.error exception.backtrace.join("\n")
 
@@ -126,17 +125,17 @@ module ApiAuthentication
       error: "internal_error",
       message: "An internal error occurred"
     }, status: :internal_server_error
-  end
+    end
 
-  def render_success(data = nil, message: "Success")
+    def render_success(data = nil, message: "Success")
     response = { status: "success", message: message }
     response[:data] = data if data
     render json: response, status: :ok
-  end
+    end
 
-  def render_created(data = nil, message: "Created")
+    def render_created(data = nil, message: "Created")
     response = { status: "created", message: message }
     response[:data] = data if data
     render json: response, status: :created
-  end
+    end
 end

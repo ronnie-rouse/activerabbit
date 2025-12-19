@@ -50,25 +50,24 @@ class User < ApplicationRecord
   end
 
   private
+    def ensure_account_exists
+      return if account.present?
 
-  def ensure_account_exists
-    return if account.present?
+      base_name =
+        if email.present?
+          "#{email.split('@').first.humanize}'s Account"
+        else
+          "New Account #{SecureRandom.hex(4)}"
+        end
 
-    base_name =
-      if email.present?
-        "#{email.split('@').first.humanize}'s Account"
-      else
-        "New Account #{SecureRandom.hex(4)}"
+      self.account = Account.find_or_create_by!(
+        name: base_name
+      ) do |a|
+        a.trial_ends_at = Rails.configuration.x.trial_days.days.from_now
+        a.current_plan = "team"
+        a.billing_interval = "month"
+        a.event_quota = 100_000
+        a.events_used_in_period = 0
       end
-
-    self.account = Account.find_or_create_by!(
-      name: base_name
-    ) do |a|
-      a.trial_ends_at = Rails.configuration.x.trial_days.days.from_now
-      a.current_plan = "team"
-      a.billing_interval = "month"
-      a.event_quota = 100_000
-      a.events_used_in_period = 0
     end
-  end
 end

@@ -45,8 +45,7 @@ class AlertJob
   end
 
   private
-
-  def dispatch_alert(alert_type, project, issue, payload)
+    def dispatch_alert(alert_type, project, issue, payload)
     case alert_type
     when "error_frequency"
       deliver_error_frequency(project, issue, payload)
@@ -59,9 +58,9 @@ class AlertJob
     else
       raise "Unknown alert type: #{alert_type}"
     end
-  end
+    end
 
-  def deliver_error_frequency(project, issue, payload)
+    def deliver_error_frequency(project, issue, payload)
     if project.notify_via_slack?
       slack_service(project).send_error_frequency_alert(issue, payload)
     end
@@ -73,9 +72,9 @@ class AlertJob
         build_error_frequency_email(issue, payload)
       )
     end
-  end
+    end
 
-  def deliver_performance(project, payload)
+    def deliver_performance(project, payload)
     event = ActsAsTenant.without_tenant do
       PerformanceEvent.unscoped.find_by(id: payload["event_id"])
     end
@@ -88,9 +87,9 @@ class AlertJob
       "Performance Alert",
       build_performance_email(event, payload)
     ) if project.notify_via_email?
-  end
+    end
 
-  def deliver_n_plus_one(project, payload)
+    def deliver_n_plus_one(project, payload)
     slack_service(project).send_n_plus_one_alert(payload) if project.notify_via_slack?
 
     send_email_alert(
@@ -98,9 +97,9 @@ class AlertJob
       "N+1 Query Alert",
       build_n_plus_one_email(payload)
     ) if project.notify_via_email?
-  end
+    end
 
-  def deliver_new_issue(project, payload)
+    def deliver_new_issue(project, payload)
     issue = ActsAsTenant.without_tenant { Issue.find(payload["issue_id"]) }
 
     slack_service(project).send_new_issue_alert(issue) if project.notify_via_slack?
@@ -110,31 +109,31 @@ class AlertJob
       "New Issue Alert",
       build_new_issue_email(issue)
     ) if project.notify_via_email?
-  end
+    end
 
-  # ------------------------
-  # Slack sending methods
-  # ------------------------
-  def slack_service(project)
+    # ------------------------
+    # Slack sending methods
+    # ------------------------
+    def slack_service(project)
     SlackNotificationService.new(project)
-  end
+    end
 
-  # ------------------------
-  # Email fallback
-  # ------------------------
-  def send_email_alert(project, subject, body)
+    # ------------------------
+    # Email fallback
+    # ------------------------
+    def send_email_alert(project, subject, body)
     AlertMailer.send_alert(
       to: project.user.email,
       subject: "[#{project.name}] #{subject}",
       body: body,
       project: project
     ).deliver_now
-  end
+    end
 
-  # ------------------------
-  # Slack message builders (reuse старые методы)
-  # ------------------------
-  def build_error_frequency_email(issue, payload)
+    # ------------------------
+    # Slack message builders (reuse старые методы)
+    # ------------------------
+    def build_error_frequency_email(issue, payload)
     <<~EMAIL
       🚨 HIGH ERROR FREQUENCY
       Project:
@@ -149,9 +148,9 @@ class AlertJob
       Controller/Action:
         #{issue.controller_action || 'Unknown'}
     EMAIL
-  end
+    end
 
-  def build_performance_email(event, payload)
+    def build_performance_email(event, payload)
     duration = payload["duration_ms"]
     endpoint = payload["controller_action"] || "Unknown"
 
@@ -169,9 +168,9 @@ class AlertJob
       Recommendation:
         Check database queries, external APIs, and recent deploys.
     EMAIL
-  end
+    end
 
-  def build_n_plus_one_email(payload)
+    def build_n_plus_one_email(payload)
     incidents = payload["incidents"]
     controller_action = payload["controller_action"]
 
@@ -186,9 +185,9 @@ class AlertJob
       Queries:
         #{incidents.map { |i| "- #{i['count_in_request']}x #{i['sql_fingerprint']['normalized_query']}" }.join("\n")}
     EMAIL
-  end
+    end
 
-  def build_new_issue_email(issue)
+    def build_new_issue_email(issue)
     <<~EMAIL
       🚨 APPLICATION ERROR
 
@@ -205,12 +204,12 @@ class AlertJob
       Recommendation:
         Review the stack trace and recent changes around this code.
     EMAIL
-  end
+    end
 
-  def error_location(issue)
+    def error_location(issue)
     issue.controller_action ||
       issue.error_location ||
       issue.top_frame ||
       "Unknown"
-  end
+    end
 end

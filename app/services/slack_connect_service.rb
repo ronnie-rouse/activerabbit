@@ -25,8 +25,11 @@ class SlackConnectService
   def find_channel(name)
     response = @conn.get("conversations.list", { types: "public_channel,private_channel" }, { "Authorization" => "Bearer #{@token}" })
     data = JSON.parse(response.body)
-    return nil unless data["ok"]
-    channel = data["channels"].find { |c| c["name"] == name }
-    channel ? channel["id"] : nil
+    if data["ok"]
+      channel = data["channels"].find { |c| c["name"] == name }
+      channel ? channel["id"] : nil
+    else
+      nil
+    end
   end
 end

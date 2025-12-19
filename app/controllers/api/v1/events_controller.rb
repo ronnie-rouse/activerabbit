@@ -168,8 +168,7 @@ class Api::V1::EventsController < Api::BaseController
   end
 
   private
-
-  def sanitize_error_payload(params)
+    def sanitize_error_payload(params)
     # Extract context data for better field mapping
     context = params[:context] || params["context"] || {}
     request_context = context[:request] || context["request"] || {}
@@ -189,9 +188,9 @@ class Api::V1::EventsController < Api::BaseController
       server_name: params[:server_name] || params["server_name"],
       request_id: params[:request_id] || params["request_id"]
     }
-  end
+    end
 
-  def sanitize_performance_payload(params)
+    def sanitize_performance_payload(params)
     md = params[:metadata] || params["metadata"] || {}
 
     # Derive controller_action from metadata if not explicitly provided
@@ -220,9 +219,9 @@ class Api::V1::EventsController < Api::BaseController
       server_name: params[:server_name] || params["server_name"],
       request_id: params[:request_id] || params["request_id"]
     }
-  end
+    end
 
-  def validate_error_payload!(payload)
+    def validate_error_payload!(payload)
     errors = []
 
     errors << "exception_class is required" if payload[:exception_class].blank?
@@ -238,9 +237,9 @@ class Api::V1::EventsController < Api::BaseController
     end
 
     true
-  end
+    end
 
-  def validate_performance_payload!(payload)
+    def validate_performance_payload!(payload)
     errors = []
 
     errors << "duration_ms is required" if payload[:duration_ms].blank?
@@ -256,18 +255,18 @@ class Api::V1::EventsController < Api::BaseController
     end
 
     true
-  end
+    end
 
-  def valid_error_payload?(payload)
+    def valid_error_payload?(payload)
     (payload[:exception_class].present? || payload[:exception_type].present?) && payload[:message].present?
-  end
+    end
 
-  def valid_performance_payload?(payload)
+    def valid_performance_payload?(payload)
     payload[:duration_ms].present? &&
     (payload[:controller_action].present? || payload[:request_path].present?)
-  end
+    end
 
-  def parse_timestamp(value)
+    def parse_timestamp(value)
     return Time.current if value.blank?
 
     case value
@@ -278,19 +277,19 @@ class Api::V1::EventsController < Api::BaseController
     else
       Time.current
     end
-  end
+    end
 
-  def parse_float(value)
+    def parse_float(value)
     return nil if value.blank?
     value.to_f rescue nil
-  end
+    end
 
-  def parse_int(value)
+    def parse_int(value)
     return nil if value.blank?
     value.to_i rescue nil
-  end
+    end
 
-  def extract_controller_action(request_context)
+    def extract_controller_action(request_context)
     controller = request_context[:controller] || request_context["controller"]
     action = request_context[:action] || request_context["action"]
 
@@ -301,9 +300,9 @@ class Api::V1::EventsController < Api::BaseController
     else
       "unknown"
     end
-  end
+    end
 
-  def normalize_backtrace(backtrace)
+    def normalize_backtrace(backtrace)
     return [] if backtrace.blank?
 
     # Handle array of strings (normal case)
@@ -323,5 +322,5 @@ class Api::V1::EventsController < Api::BaseController
       # Handle string backtrace
       backtrace.to_s.split("\n")
     end
-  end
+    end
 end

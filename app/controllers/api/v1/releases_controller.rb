@@ -92,16 +92,15 @@ class Api::V1::ReleasesController < Api::BaseController
   end
 
   private
-
-  def sanitize_release_payload(params)
+    def sanitize_release_payload(params)
     {
       version: params[:version] || params["version"],
       environment: params[:environment] || params["environment"] || "production",
       metadata: params[:metadata] || params["metadata"] || {}
     }
-  end
+    end
 
-  def validate_release_payload!(payload)
+    def validate_release_payload!(payload)
     errors = []
 
     errors << "version is required" if payload[:version].blank?
@@ -116,5 +115,5 @@ class Api::V1::ReleasesController < Api::BaseController
     end
 
     true
-  end
+    end
 end

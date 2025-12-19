@@ -81,8 +81,7 @@ class QuotaAlertMailer < ApplicationMailer
   end
 
   private
-
-  def quota_for_resource(resource_type)
+    def quota_for_resource(resource_type)
     case resource_type
     when :events
       @account.event_quota_value
@@ -97,9 +96,9 @@ class QuotaAlertMailer < ApplicationMailer
     else
       0
     end
-  end
+    end
 
-  def usage_for_resource(resource_type)
+    def usage_for_resource(resource_type)
     case resource_type
     when :events
       @account.events_used_in_billing_period
@@ -114,12 +113,12 @@ class QuotaAlertMailer < ApplicationMailer
     else
       0
     end
-  end
+    end
 
-  def pricing_url
+    def pricing_url
     Rails.application.routes.url_helpers.pricing_url(
       host: ENV.fetch("APP_HOST", "localhost:3000"),
       protocol: Rails.env.production? ? "https" : "http"
     )
-  end
+    end
 end

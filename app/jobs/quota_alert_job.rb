@@ -12,8 +12,7 @@ class QuotaAlertJob < ApplicationJob
   end
 
   private
-
-  def check_account_quotas(account)
+    def check_account_quotas(account)
     # Initialize alert tracking if needed
     account.last_quota_alert_sent_at ||= {}
 
@@ -24,9 +23,9 @@ class QuotaAlertJob < ApplicationJob
 
     # Save alert timestamps
     account.save! if account.last_quota_alert_sent_at_changed?
-  end
+    end
 
-  def check_resource_quota(account, resource_type)
+    def check_resource_quota(account, resource_type)
     # Wrap in ActsAsTenant.without_tenant to access tenant-scoped models
     percentage = ActsAsTenant.without_tenant do
       account.usage_percentage(resource_type)
@@ -56,9 +55,9 @@ class QuotaAlertJob < ApplicationJob
         "percentage" => percentage.round(2)
       }
     end
-  end
+    end
 
-  def should_send_alert?(level, last_sent_at, last_level, percentage)
+    def should_send_alert?(level, last_sent_at, last_level, percentage)
     # Always send if no alert was ever sent
     return true if last_sent_at.nil?
 
@@ -73,16 +72,16 @@ class QuotaAlertJob < ApplicationJob
 
     # For 80% and 90% warnings, only send once per level
     false
-  end
+    end
 
-  def level_escalated?(last_level, current_level)
+    def level_escalated?(last_level, current_level)
     level_priority = { "80_percent" => 1, "90_percent" => 2, "exceeded" => 3 }
     return false if last_level.nil?
 
     level_priority[current_level].to_i > level_priority[last_level].to_i
-  end
+    end
 
-  def send_appropriate_alert(account, resource_type, level, last_alert_info)
+    def send_appropriate_alert(account, resource_type, level, last_alert_info)
     case level
     when "80_percent"
       QuotaAlertMailer.warning_80_percent(account, resource_type).deliver_later
@@ -110,5 +109,5 @@ class QuotaAlertJob < ApplicationJob
         Rails.logger.info "[QuotaAlert] Sent exceeded reminder (day #{days_over_quota}) for #{account.name} - #{resource_type}"
       end
     end
-  end
+    end
 end

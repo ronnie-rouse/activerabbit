@@ -99,13 +99,12 @@ class SqlFingerprint < ApplicationRecord
   end
 
   private
-
-  def self.generate_fingerprint(sql)
+    def self.generate_fingerprint(sql)
     normalized = normalize_query(sql)
     Digest::SHA256.hexdigest(normalized)
-  end
+    end
 
-  def self.normalize_query(sql)
+    def self.normalize_query(sql)
     # Remove specific values and normalize query structure
     normalized = sql.dup
 
@@ -124,9 +123,9 @@ class SqlFingerprint < ApplicationRecord
 
     # Normalize whitespace
     normalized.gsub(/\s+/, " ").strip.upcase
-  end
+    end
 
-  def self.extract_query_type(sql)
+    def self.extract_query_type(sql)
     case sql.strip.upcase
     when /^SELECT/
       "SELECT"
@@ -139,9 +138,9 @@ class SqlFingerprint < ApplicationRecord
     else
       "OTHER"
     end
-  end
+    end
 
-  def self.calculate_severity(count, avg_duration)
+    def self.calculate_severity(count, avg_duration)
     impact_score = count * avg_duration
 
     case impact_score
@@ -152,9 +151,9 @@ class SqlFingerprint < ApplicationRecord
     else
       "high"
     end
-  end
+    end
 
-  def self.generate_suggestion(sql_fingerprint)
+    def self.generate_suggestion(sql_fingerprint)
     query = sql_fingerprint.normalized_query
 
     if query.include?("SELECT") && query.include?("WHERE")
@@ -168,5 +167,5 @@ class SqlFingerprint < ApplicationRecord
     else
       "Review query performance and consider optimization"
     end
-  end
+    end
 end

@@ -43,8 +43,7 @@ class PricingController < ApplicationController
   end
 
   private
-
-  def set_usage_data
+    def set_usage_data
     return unless @account
 
     # Rolling 30-day usage window (for requests totals)
@@ -96,13 +95,13 @@ class PricingController < ApplicationController
     @projects_quota = @account.projects_quota
     @projects_used = @account.projects_used
     @projects_remaining = [@projects_quota - @projects_used, 0].max
-  end
+    end
 
-  # Build comparison data showing what the user's current usage would look like
-  # against the Free plan limits. This is specifically for the /usage page so
-  # that even during a 14‑day Team trial we can communicate:
-  # "Your account is Free, and you've already used more than a Free plan allows."
-  def build_free_plan_comparison_if_on_trial!
+    # Build comparison data showing what the user's current usage would look like
+    # against the Free plan limits. This is specifically for the /usage page so
+    # that even during a 14‑day Team trial we can communicate:
+    # "Your account is Free, and you've already used more than a Free plan allows."
+    def build_free_plan_comparison_if_on_trial!
     return unless @account&.on_trial?
 
     free_quotas = ResourceQuotas::PLAN_QUOTAS[:free]
@@ -136,9 +135,9 @@ class PricingController < ApplicationController
 
     @resources_exceeding_free =
       @free_plan_usage.select { |_key, data| data[:used].to_i > data[:quota].to_i }.keys
-  end
+    end
 
-  def calculate_next_payment_date(subscription)
+    def calculate_next_payment_date(subscription)
     return nil unless subscription&.current_period_end
 
     # Calculate next payment date based on current period end
@@ -150,20 +149,20 @@ class PricingController < ApplicationController
     end
 
     next_payment_date.strftime("%B %d, %Y")
-  end
+    end
 
-  def calculate_trial_days_left(subscription)
+    def calculate_trial_days_left(subscription)
     return nil unless subscription.trial_ends_at
 
     days_left = (subscription.trial_ends_at.to_date - Date.current).to_i
     days_left.positive? ? days_left : nil
-  end
+    end
 
-  def format_billing_period(subscription)
+    def format_billing_period(subscription)
     return nil unless subscription.current_period_start && subscription.current_period_end
 
     start_date = subscription.current_period_start.strftime("%B %d")
     end_date = subscription.current_period_end.strftime("%B %d")
     "#{start_date} – #{end_date}"
-  end
+    end
 end

@@ -51,8 +51,7 @@ class Healthcheck < ApplicationRecord
   end
 
   private
-
-  def perform_http_check
+    def perform_http_check
     require "net/http"
     require "uri"
 
@@ -75,9 +74,9 @@ class Healthcheck < ApplicationRecord
         { status: "critical", message: "HTTP #{response.code}", duration: duration }
       end
     end
-  end
+    end
 
-  def perform_database_check
+    def perform_database_check
     start_time = Time.current
 
     ActiveRecord::Base.connection.execute("SELECT 1")
@@ -90,9 +89,9 @@ class Healthcheck < ApplicationRecord
       update_check_result("warning", "Database slow", duration)
       { status: "warning", message: "Database slow", duration: duration }
     end
-  end
+    end
 
-  def perform_redis_check
+    def perform_redis_check
     start_time = Time.current
 
     Redis.current.ping
@@ -100,9 +99,9 @@ class Healthcheck < ApplicationRecord
 
     update_check_result("healthy", "Redis responsive", duration)
     { status: "healthy", message: "Redis responsive", duration: duration }
-  end
+    end
 
-  def perform_sidekiq_check
+    def perform_sidekiq_check
     start_time = Time.current
 
     stats = Sidekiq::Stats.new
@@ -117,9 +116,9 @@ class Healthcheck < ApplicationRecord
       update_check_result("healthy", "Sidekiq healthy", duration)
       { status: "healthy", message: "Sidekiq healthy", duration: duration }
     end
-  end
+    end
 
-  def perform_custom_check
+    def perform_custom_check
     # Placeholder for custom check logic
     # This would execute custom Ruby code defined in config['code']
     start_time = Time.current
@@ -127,14 +126,14 @@ class Healthcheck < ApplicationRecord
 
     update_check_result("healthy", "Custom check passed", duration)
     { status: "healthy", message: "Custom check passed", duration: duration }
-  end
+    end
 
-  def update_check_result(status, message, duration)
+    def update_check_result(status, message, duration)
     update!(
       status: status,
       last_checked_at: Time.current,
       response_time_ms: (duration * 1000).round(2),
       message: message
     )
-  end
+    end
 end

@@ -17,16 +17,15 @@ class Api::BaseController < ActionController::API
   end
 
   private
-
-  def json_request?
+    def json_request?
     request.format.json?
-  end
+    end
 
-  def set_content_type
+    def set_content_type
     response.content_type = "application/json"
-  end
+    end
 
-  def check_payload_size
+    def check_payload_size
     max_size = 10.megabytes
 
     if request.content_length && request.content_length > max_size
@@ -35,5 +34,5 @@ class Api::BaseController < ActionController::API
         message: "Payload size exceeds maximum of #{max_size / 1.megabyte}MB"
       }, status: :payload_too_large
     end
-  end
+    end
 end

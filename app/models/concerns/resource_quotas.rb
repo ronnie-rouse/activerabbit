@@ -151,8 +151,11 @@ module ResourceQuotas
     used = usage_for_resource(resource_type)
     quota = quota_for_resource_by_type(resource_type)
 
-    return false unless used && quota
-    used < quota
+    if used && quota
+      used < quota
+    else
+      false
+    end
   end
 
   # Calculate usage percentage for a specific resource type
@@ -166,10 +169,15 @@ module ResourceQuotas
     used = usage_for_resource(resource_type)
     quota = quota_for_resource_by_type(resource_type)
 
-    return 0.0 unless used && quota
-    return 0.0 if quota.zero?
-
-    ((used.to_f / quota) * 100).round(2)
+    if used && quota
+      if quota.zero?
+        0.0
+      else
+        ((used.to_f / quota) * 100).round(2)
+      end
+    else
+      0.0
+    end
   end
 
   # Get usage summary for all resources
@@ -199,15 +207,14 @@ module ResourceQuotas
   end
 
   private
-
-  # Get quota for a specific resource based on current plan / trial state
-  #
-  # @param resource_key [Symbol] resource key from PLAN_QUOTAS
-  # @return [Integer] quota value
-  def quota_for_resource(resource_key)
-    plan_key = effective_plan_key
-    PLAN_QUOTAS.dig(plan_key, resource_key) || PLAN_QUOTAS.dig(DEFAULT_PLAN, resource_key) || 0
-  end
+    # Get quota for a specific resource based on current plan / trial state
+    #
+    # @param resource_key [Symbol] resource key from PLAN_QUOTAS
+    # @return [Integer] quota value
+    def quota_for_resource(resource_key)
+      plan_key = effective_plan_key
+      PLAN_QUOTAS.dig(plan_key, resource_key) || PLAN_QUOTAS.dig(DEFAULT_PLAN, resource_key) || 0
+    end
 
   # Get current usage for a specific resource type
   #

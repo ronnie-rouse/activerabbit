@@ -24,17 +24,16 @@ class ApplicationController < ActionController::Base
   helper_method :current_project, :current_account, :selected_project_for_menu
 
   protected
-
-  # Use auth layout for Devise controllers
-  def layout_by_resource
-    if devise_controller?
-      "auth"
-    else
-      "application"
+    # Use auth layout for Devise controllers
+    def layout_by_resource
+      if devise_controller?
+        "auth"
+      else
+        "application"
+      end
     end
-  end
 
-  def after_sign_in_path_for(resource)
+    def after_sign_in_path_for(resource)
     # Safely check onboarding status
     begin
       if resource.needs_onboarding?
@@ -46,29 +45,28 @@ class ApplicationController < ActionController::Base
       # If tenant isn't set yet, assume onboarding is needed
       onboarding_welcome_path
     end
-  end
+    end
 
-  def current_project
+    def current_project
     @current_project
-  end
+    end
 
-  def current_account
+    def current_account
     @current_account ||= current_user&.account
-  end
+    end
 
-  def selected_project_for_menu
+    def selected_project_for_menu
     @selected_project_for_menu
-  end
+    end
 
   private
-
-  def set_current_tenant
+    def set_current_tenant
     if user_signed_in? && current_user.account
       ActsAsTenant.current_tenant = current_user.account
     end
-  end
+    end
 
-  def set_current_project_from_slug
+    def set_current_project_from_slug
     return unless user_signed_in?
     return if devise_controller?
 
@@ -92,9 +90,9 @@ class ApplicationController < ActionController::Base
       # If no selected project in session or project not found, use first project
       @selected_project_for_menu ||= current_account&.projects&.first
     end
-  end
+    end
 
-  def check_onboarding_needed
+    def check_onboarding_needed
     return unless user_signed_in?
     return if devise_controller?
     return if controller_name == "onboarding"
@@ -108,9 +106,9 @@ class ApplicationController < ActionController::Base
       # If tenant isn't set, redirect to onboarding
       redirect_to onboarding_welcome_path
     end
-  end
+    end
 
-  def handle_subscription_welcome
+    def handle_subscription_welcome
     return unless user_signed_in?
     return unless params[:subscribed] == "1"
     plan = params[:plan].presence || current_account&.current_plan
@@ -121,9 +119,9 @@ class ApplicationController < ActionController::Base
       # Hide banner once after subscribe
       session[:suppress_billing_banner] = true
     end
-  end
+    end
 
-  def check_quota_exceeded
+    def check_quota_exceeded
     return unless user_signed_in?
     return if devise_controller?
     return if controller_name == "onboarding"
@@ -135,7 +133,7 @@ class ApplicationController < ActionController::Base
     if message
       flash.now[:alert] = view_context.link_to(message, plan_path, class: "underline hover:text-red-800").html_safe
     end
-  end
+    end
 
-  layout :layout_by_resource
+    layout :layout_by_resource
 end

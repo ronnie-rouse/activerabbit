@@ -25,8 +25,7 @@ class IssueAlertJob
   end
 
   private
-
-  def redis_key(issue)
+    def redis_key(issue)
     "issue_seen:#{issue.project_id}:#{issue.fingerprint}"
-  end
+    end
 end

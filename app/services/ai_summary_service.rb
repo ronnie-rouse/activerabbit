@@ -20,12 +20,11 @@ class AiSummaryService
   end
 
   private
-
-  def api_key
+    def api_key
     ENV["OPENAI_API_KEY"]
-  end
+    end
 
-  def client_completion(content)
+    def client_completion(content)
     require "net/http"
     require "json"
 
@@ -52,9 +51,9 @@ class AiSummaryService
 
     json = JSON.parse(res.body)
     json.dig("choices", 0, "message", "content")
-  end
+    end
 
-  def build_content
+    def build_content
     parts = []
     parts << "Exception: #{@issue.exception_class}"
     parts << "Controller action: #{@issue.controller_action}"
@@ -83,5 +82,5 @@ class AiSummaryService
     end
 
     parts.join("\n")
-  end
+    end
 end

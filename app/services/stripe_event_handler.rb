@@ -21,8 +21,7 @@ class StripeEventHandler
   end
 
   private
-
-  def account_from_customer
+    def account_from_customer
     customer_id = if @data.respond_to?(:customer)
       @data.customer
     else
@@ -38,13 +37,13 @@ class StripeEventHandler
     else
       nil
     end
-  end
+    end
 
-  def handle_checkout_completed
+    def handle_checkout_completed
     # No-op: Pay will sync on subscription events.
-  end
+    end
 
-  def sync_subscription
+    def sync_subscription
     account = account_from_customer
     return unless account
 
@@ -143,9 +142,9 @@ class StripeEventHandler
       pay_sub.ends_at = Time.at(ended_at_val) if ended_at_val
       pay_sub.save!
     end
-  end
+    end
 
-  def handle_subscription_deleted
+    def handle_subscription_deleted
     if (account = account_from_customer)
       account.update!(ai_mode_enabled: false)
     end
@@ -155,15 +154,15 @@ class StripeEventHandler
         pay_sub.update!(status: "canceled", ends_at: Time.current)
       end
     end
-  end
+    end
 
-  def handle_invoice_upcoming
+    def handle_invoice_upcoming
     account = account_from_customer
     return unless account
     OverageCalculator.new(account:).attach_overage_invoice_item!(stripe_invoice: @data, customer_id: @data["customer"])
-  end
+    end
 
-  def handle_payment_succeeded
+    def handle_payment_succeeded
     account = account_from_customer
     return unless account
     settings = account.settings || {}
@@ -189,9 +188,9 @@ class StripeEventHandler
     ensure
       @data = original_data
     end
-  end
+    end
 
-  def handle_payment_failed
+    def handle_payment_failed
     account = account_from_customer
     return unless account
     # Mark past_due flag for feature restriction
@@ -199,26 +198,26 @@ class StripeEventHandler
     settings["past_due"] = true
     account.update(settings: settings)
     DunningFollowupJob.perform_later(account_id: account.id, invoice_id: @data["id"])
-  end
+    end
 
-  def handle_trial_will_end
+    def handle_trial_will_end
     account = account_from_customer
     return unless account
     TrialEndingReminderJob.perform_later(account_id: account.id, at: Time.current)
-  end
+    end
 
-  def base_plan_price_ids
+    def base_plan_price_ids
     [
       ENV["STRIPE_PRICE_TEAM_MONTHLY"], ENV["STRIPE_PRICE_TEAM_ANNUAL"],
       ENV["STRIPE_PRICE_BUSINESS_MONTHLY"], ENV["STRIPE_PRICE_BUSINESS_ANNUAL"]
     ].compact
-  end
+    end
 
-  def ai_price_ids
+    def ai_price_ids
     [ENV["STRIPE_PRICE_AI_MONTHLY"], ENV["STRIPE_PRICE_AI_ANNUAL"]].compact
-  end
+    end
 
-  def plan_interval_from_price(price_id)
+    def plan_interval_from_price(price_id)
     case price_id
     when ENV["STRIPE_PRICE_TEAM_MONTHLY"] then ["team", "month"]
     when ENV["STRIPE_PRICE_TEAM_ANNUAL"] then ["team", "year"]
@@ -226,13 +225,13 @@ class StripeEventHandler
     when ENV["STRIPE_PRICE_BUSINESS_ANNUAL"] then ["business", "year"]
     else [nil, nil]
     end
-  end
+    end
 
-  def quota_for(plan)
+    def quota_for(plan)
     case plan
     when "team" then 50_000
     when "business" then 50_000
     else 10_000 # free plan default
     end
-  end
+    end
 end

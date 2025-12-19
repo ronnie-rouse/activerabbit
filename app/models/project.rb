@@ -138,8 +138,7 @@ class Project < ApplicationRecord
   end
 
   private
-
-  def generate_slug
+    def generate_slug
     base_slug = name.parameterize
     counter = 1
     potential_slug = base_slug
@@ -150,5 +149,5 @@ class Project < ApplicationRecord
     end
 
     self.slug = potential_slug
-  end
+    end
 end

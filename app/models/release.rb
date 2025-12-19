@@ -113,12 +113,11 @@ class Release < ApplicationRecord
   end
 
   private
-
-  def detect_regressions
+    def detect_regressions
     RegressionDetectionJob.perform_in(5.minutes, id)
-  end
+    end
 
-  def calculate_regression_severity(regression_pct, absolute_increase_ms)
+    def calculate_regression_severity(regression_pct, absolute_increase_ms)
     if regression_pct > 50 && absolute_increase_ms > 500
       "high"
     elsif regression_pct > 25 && absolute_increase_ms > 200
@@ -126,5 +125,5 @@ class Release < ApplicationRecord
     else
       "low"
     end
-  end
+    end
 end
